@@ -84,6 +84,7 @@
   <script setup>
   import { ref, reactive } from 'vue'
   import { RouterLink } from 'vue-router'
+  import { saveListing } from '@/services/listingsService'
   
   // Success state
   const showSuccess = ref(false)
@@ -123,14 +124,26 @@
   }
   
   // Form submission
-  const handleSubmit = () => {
-    console.log('Form submitted:', {
-      ...formData,
-      tags: selectedTags.value,
-      image: imagePreview.value
-    })
-    // Show success message
-    showSuccess.value = true
+  const handleSubmit = async () => {
+    try {
+      // Prepare the listing data
+      const listingData = {
+        title: formData.title,
+        description: formData.description,
+        tags: selectedTags.value,
+        image: imagePreview.value
+      }
+      
+      // Save to localStorage
+      const savedListing = saveListing(listingData)
+      console.log('Listing saved successfully:', savedListing)
+      
+      // Show success message
+      showSuccess.value = true
+    } catch (error) {
+      console.error('Error saving listing:', error)
+      alert('There was an error saving your listing. Please try again.')
+    }
   }
   
   // Reset form to create another post

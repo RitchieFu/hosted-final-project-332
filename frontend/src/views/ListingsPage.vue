@@ -14,11 +14,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import ListingCard from '@/components/ListingCard.vue'
+import { getListings } from '@/services/listingsService'
 
-// Static listings data
-const listings = ref([
+// Combined listings data (localStorage + mock data)
+const listings = ref([])
+
+// Mock data for demonstration
+const mockListings = [
   {
     id: 1,
     title: 'Need help with Calculus homework - willing to pay $20/hour',
@@ -123,7 +127,32 @@ const listings = ref([
     image: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=400&q=80',
     tags: ['Creative Work', 'Music'],
   },
-])
+]
+
+// Load listings on component mount
+onMounted(() => {
+  loadListings()
+})
+
+// Function to load listings from localStorage and combine with mock data
+const loadListings = () => {
+  try {
+    // Get user-submitted listings from localStorage
+    const userListings = getListings()
+    
+    // Combine user listings (newest first) with mock data
+    const allListings = [...userListings, ...mockListings]
+    
+    // Update the reactive listings
+    listings.value = allListings
+    
+    console.log(`Loaded ${userListings.length} user listings and ${mockListings.length} mock listings`)
+  } catch (error) {
+    console.error('Error loading listings:', error)
+    // Fallback to mock data only
+    listings.value = mockListings
+  }
+}
 </script>
 
 <style scoped>
