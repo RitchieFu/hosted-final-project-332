@@ -5,21 +5,34 @@
       <p class="page-subtitle">Find help and opportunities in your community</p>
     </div>
 
-    <div class="masonry-grid">
-      <div v-for="listing in listings" :key="listing.id" class="masonry-item">
-        <ListingCard :listing="listing" />
+    <!-- Filter Sidebar -->
+    <FilterSidebar 
+      v-model:selected-filters="selectedFilters"
+      :filtered-count="filteredListings.length"
+    />
+
+    <!-- Listings -->
+    <div class="listings-container-centered">
+      <div class="masonry-grid">
+        <div v-for="listing in filteredListings" :key="listing.id" class="masonry-item">
+          <ListingCard :listing="listing" />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ListingCard from '@/components/ListingCard.vue'
+import FilterSidebar from '@/components/FilterSidebar.vue'
 import { getListings, generateRandomDate } from '@/services/listingsService'
 
 // Combined listings data (localStorage + mock data)
 const listings = ref([])
+
+// Filter state
+const selectedFilters = ref([])
 
 // Mock data for demonstration
 const mockListings = [
@@ -130,6 +143,17 @@ const mockListings = [
   },
 ]
 
+// Filtered listings
+const filteredListings = computed(() => {
+  if (selectedFilters.value.length === 0) {
+    return listings.value
+  }
+  return listings.value.filter(listing => 
+    selectedFilters.value.some(filterTag => listing.tags.includes(filterTag))
+  )
+})
+
+
 // Load listings on component mount
 onMounted(() => {
   loadListings()
@@ -191,11 +215,16 @@ html { overflow-y: scroll; }
   margin: 0;
 }
 
+/* Layout */
+.listings-container-centered {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
 .masonry-grid {
   column-width: 320px; /* browser decides column count based on width */
   column-gap: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
   contain: layout;
   will-change: auto;
 }
@@ -244,6 +273,10 @@ html { overflow-y: scroll; }
 
   .masonry-grid {
     column-count: 1;
+  }
+  
+  .listings-container-centered {
+    padding: 0 1rem;
   }
 }
 </style>

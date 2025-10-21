@@ -97,7 +97,9 @@
   
   // Tags functionality
   const availableTags = ['Homework Help', 'Creative Work', 'Professional Help', 'Manual Labor', 
-                        'Business', 'Housing', 'For Sale', 'Other   ']
+                        'Business', 'Housing', 'For Sale', 'Math', 'Moving', 'Roommate', 
+                        'Electronics', 'Design', 'Tutoring', 'Job', 'Study Group', 'Books', 
+                        'Career', 'Yard Work', 'Photography', 'Services', 'Music', 'Other']
   const selectedTags = ref([])
   
   const toggleTag = (tag) => {
