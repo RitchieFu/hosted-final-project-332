@@ -155,7 +155,7 @@
     align-items: flex-start;
     min-height: calc(100vh - 80px);
     padding: 1rem 2rem;
-    background-color: #f8f9fa;
+    background-color: #f5f5f5;
   }
   
   .post-form {

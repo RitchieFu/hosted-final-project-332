@@ -1,7 +1,15 @@
 <template>
   <div class="listing-card">
     <div v-if="listing.image" class="image-container">
-      <img :src="listing.image" :alt="listing.title" class="listing-image" />
+      <img 
+        :src="listing.image" 
+        :alt="listing.title" 
+        class="listing-image"
+        @load="handleImageLoad"
+        ref="imageRef"
+        loading="lazy"
+        decoding="async"
+      />
     </div>
     <div class="content">
       <h3 class="listing-title">{{ listing.title }}</h3>
@@ -20,12 +28,53 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+
 defineProps({
   listing: {
     type: Object,
     required: true
   }
 })
+
+const imageRef = ref(null)
+
+const handleImageLoad = () => {
+  if (!imageRef.value) return
+  
+  const img = imageRef.value
+  const container = img.parentElement
+  
+  // Use requestAnimationFrame for better performance
+  requestAnimationFrame(() => {
+    // Get the natural dimensions of the image
+    const naturalWidth = img.naturalWidth
+    const naturalHeight = img.naturalHeight
+    
+    if (naturalWidth === 0 || naturalHeight === 0) return
+    
+    const aspectRatio = naturalWidth / naturalHeight
+    
+    // Set container dimensions based on aspect ratio, but respect max-height
+    const containerWidth = container.offsetWidth
+    let containerHeight
+    
+    if (aspectRatio > 1) {
+      // Landscape image - make it shorter
+      containerHeight = containerWidth * 0.75
+    } else if (aspectRatio < 1) {
+      // Portrait image - make it taller
+      containerHeight = containerWidth * 1.5
+    } else {
+      // Square image - keep it square
+      containerHeight = containerWidth
+    }
+    
+    // Ensure we don't exceed the max-height of 300px
+    containerHeight = Math.min(containerHeight, 300)
+    container.style.height = `${containerHeight}px`
+  })
+}
 </script>
 
 <style scoped>
@@ -38,6 +87,11 @@ defineProps({
   cursor: pointer;
   break-inside: avoid;
   margin-bottom: 1rem;
+  will-change: transform;
+  contain: layout style paint;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
 }
 
 .listing-card:hover {
@@ -48,16 +102,19 @@ defineProps({
 .image-container {
   width: 100%;
   max-height: 300px;
-  min-height: 200px;
   overflow: hidden;
   position: relative;
+  contain: layout;
+  flex-shrink: 0;
 }
 
 .listing-image {
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .listing-card:hover .listing-image {
@@ -66,8 +123,13 @@ defineProps({
 
 .content {
   padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
-
+ 
 .listing-title {
   color: #041E42;
   font-size: 1.1rem;
@@ -95,6 +157,9 @@ defineProps({
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-top: auto;
+  overflow: hidden;
+  max-height: 60px;
 }
 
 .tag {
