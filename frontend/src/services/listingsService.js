@@ -24,7 +24,8 @@ export const saveListing = (listingData) => {
     const newListing = {
       id: generateId(),
       ...listingData,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      postedAt: new Date().toISOString()
     }
     
     listings.unshift(newListing) // Add to beginning of array (newest first)
@@ -69,4 +70,12 @@ export const clearAllListings = () => {
 // Get listings count
 export const getListingsCount = () => {
   return getListings().length
+}
+
+// Generate a random date between September 1, 2025 and October 21, 2025
+export const generateRandomDate = () => {
+  const startDate = new Date('2025-09-01')
+  const endDate = new Date('2025-10-21')
+  const randomTime = startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime())
+  return new Date(randomTime).toISOString()
 }

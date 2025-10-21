@@ -16,7 +16,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import ListingCard from '@/components/ListingCard.vue'
-import { getListings } from '@/services/listingsService'
+import { getListings, generateRandomDate } from '@/services/listingsService'
 
 // Combined listings data (localStorage + mock data)
 const listings = ref([])
@@ -30,6 +30,7 @@ const mockListings = [
       'Struggling with derivatives and integrals, need someone to explain concepts clearly.',
     image: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&q=80',
     tags: ['Homework Help', 'Math'],
+    postedAt: generateRandomDate(),
   },
   {
     id: 2,
@@ -140,8 +141,14 @@ const loadListings = () => {
     // Get user-submitted listings from localStorage
     const userListings = getListings()
     
+    // Add random dates to mock listings if they don't have postedAt
+    const mockListingsWithDates = mockListings.map(listing => ({
+      ...listing,
+      postedAt: listing.postedAt || generateRandomDate()
+    }))
+    
     // Combine user listings (newest first) with mock data
-    const allListings = [...userListings, ...mockListings]
+    const allListings = [...userListings, ...mockListingsWithDates]
     
     // Update the reactive listings
     listings.value = allListings
