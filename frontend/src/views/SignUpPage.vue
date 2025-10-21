@@ -80,7 +80,7 @@
                 class="privacy-checkbox"
               >
               <label for="privacyAgreement" class="privacy-label">
-                I agree to the <a href="#" class="privacy-link">Privacy Policy</a> and understand that my information will be used to provide community services and may be shared with other users for legitimate purposes.
+                I agree to the <a href="#" @click.prevent="openPrivacyModal" class="privacy-link">Privacy Policy</a> and understand that my information will be used to provide community services and may be shared with other users for legitimate purposes.
               </label>
             </div>
           </div>
@@ -97,6 +97,32 @@
         
         <div class="login-link">
           <p>Already have an account? <RouterLink to="/login" class="link">Sign in here</RouterLink></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div v-if="showPrivacyModal" class="modal-overlay" @click="closePrivacyModal">
+      <div class="privacy-modal" @click.stop>
+        <div class="privacy-header">
+          <h2>Privacy Policy</h2>
+          <button @click="closePrivacyModal" class="close-button">&times;</button>
+        </div>
+        <div class="privacy-content">
+          <p><strong>Information Collection and Use</strong></p>
+          <p>ZagsHelpZags collects personal information including your name, email address, phone number, and any content you post to help facilitate community connections and services. We use this information to match you with relevant opportunities, enable communication between users, and improve our platform's functionality.</p>
+          
+          <p><strong>Data Sharing</strong></p>
+          <p>Your contact information and profile details may be shared with other users when you participate in listings or respond to posts. We do not sell your personal information to third parties, but we may share aggregated, anonymized data for research and platform improvement purposes.</p>
+          
+          <p><strong>Data Security</strong></p>
+          <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet is 100% secure, and we cannot guarantee absolute security.</p>
+          
+          <p><strong>Your Rights</strong></p>
+          <p>You have the right to access, update, or delete your personal information at any time. You can also opt out of certain communications by adjusting your account settings or contacting us directly.</p>
+        </div>
+        <div class="privacy-footer">
+          <button @click="closePrivacyModal" class="accept-button">I Understand</button>
         </div>
       </div>
     </div>
@@ -119,6 +145,7 @@ const formData = ref({
 
 // Privacy agreement
 const privacyAccepted = ref(false)
+const showPrivacyModal = ref(false)
 
 // Form validation
 const isFormValid = computed(() => {
@@ -129,6 +156,15 @@ const isFormValid = computed(() => {
          formData.value.confirmPassword &&
          formData.value.password === formData.value.confirmPassword
 })
+
+// Modal functions
+const openPrivacyModal = () => {
+  showPrivacyModal.value = true
+}
+
+const closePrivacyModal = () => {
+  showPrivacyModal.value = false
+}
 
 // Handle form submission
 const handleSignUp = () => {
@@ -287,6 +323,115 @@ const handleSignUp = () => {
   text-decoration: underline;
 }
 
+/* Privacy Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.privacy-modal {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.privacy-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e1e5e9;
+  background-color: #f8f9fa;
+}
+
+.privacy-header h2 {
+  margin: 0;
+  color: #041E42;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.close-button:hover {
+  background-color: #e9ecef;
+}
+
+.privacy-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.privacy-content p {
+  margin: 0 0 1rem 0;
+  line-height: 1.6;
+  color: #333;
+}
+
+.privacy-content p:last-child {
+  margin-bottom: 0;
+}
+
+.privacy-content strong {
+  color: #041E42;
+  font-weight: 600;
+}
+
+.privacy-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #e1e5e9;
+  background-color: #f8f9fa;
+  text-align: center;
+}
+
+.accept-button {
+  background-color: #041E42;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.accept-button:hover {
+  background-color: #033a7a;
+  transform: translateY(-1px);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .signup-container {
@@ -299,6 +444,20 @@ const handleSignUp = () => {
   
   .signup-title {
     font-size: 1.75rem;
+  }
+  
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+  
+  .privacy-modal {
+    max-height: 90vh;
+  }
+  
+  .privacy-header,
+  .privacy-content,
+  .privacy-footer {
+    padding: 1rem;
   }
 }
 </style>
