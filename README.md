@@ -44,9 +44,14 @@ npm run dev
 This will start the development server for Vue, and in your terminal, you will see a localhost link with a specific port number. Open that up in your browser to see live updates when you save.
 
 ### Usage:
-
+- When you see the website for the first time, you will likely see the home page first. The home page has no content on it yet.
+- On the listings page, you will see some pre-populated listings with placeholder data. This is just an example of what the posts might look like.
+- On the post tab, you may create your own listing. You must fill out the title and the description, but the tags and the image are optional. Once you click submit, your post will show up in the listings. Just a note, the results are rendered by column instead of rows, so any new listings you add will populate the left most row first. I will work on fixing that for the next deliverable.
+- The login screen has no data on it right now.
+- The sign up screen has a form where you can enter in some information. You must also click "agree" on the privacy notice before being allowed to sign up. After you click sign up, you should see an alert that indicates that you have signed up. I have not connected this to an authentication flow, but I am working on that for the next release.
 ### Contributing:
-
+I am working by myself for this project! If someone wanted to help, their best bet would to make a new branch and create pull requests!!
 ### Credits
-
+Ritchie Fu, Gonzaga University
 ### License
+I don't currently have a license, but I might go with the MIT license. I'm not sure yet.
