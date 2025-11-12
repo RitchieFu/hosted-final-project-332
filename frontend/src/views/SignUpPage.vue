@@ -35,8 +35,12 @@
               id="email" 
               v-model="formData.email"
               class="form-input"
+              :class="{ 'input-error': showEmailError }"
               required
             >
+            <p v-if="showEmailError" class="error-message">
+              Only @zagmail.gonzaga.edu email addresses are allowed
+            </p>
           </div>
           
           <div class="form-group">
@@ -151,6 +155,16 @@ const formData = ref({
 const privacyAccepted = ref(false)
 const showPrivacyModal = ref(false)
 
+// Email domain validation
+const isValidEmailDomain = computed(() => {
+  if (!formData.value.email) return true // Don't show error if empty (handled by required)
+  return formData.value.email.toLowerCase().endsWith('@zagmail.gonzaga.edu')
+})
+
+const showEmailError = computed(() => {
+  return formData.value.email.length > 0 && !isValidEmailDomain.value
+})
+
 // Password mismatch validation
 const showPasswordMismatch = computed(() => {
   return formData.value.confirmPassword.length > 0 && 
@@ -162,6 +176,7 @@ const isFormValid = computed(() => {
   return formData.value.firstName && 
          formData.value.lastName && 
          formData.value.email && 
+         isValidEmailDomain.value &&
          formData.value.password && 
          formData.value.confirmPassword &&
          formData.value.password === formData.value.confirmPassword
