@@ -274,20 +274,35 @@ const closePrivacyModal = () => {
 // Handle form submission
 const handleSignUp = async () => {
   if (privacyAccepted.value && isFormValid.value) {
-    // TODO: Implement actual sign up logic with Stytch
-    // For now, navigate to verification page
     try {
-      // This will be replaced with actual Stytch API call
-      console.log('Sign up data:', formData.value)
-      
-      // Set flag in sessionStorage to allow access to verify-email page
-      sessionStorage.setItem('signupCompleted', 'true')
-      
-      // Navigate to email verification page
-      router.push('/verify-email')
+      // Call backend API to create user with Stytch
+      const response = await fetch('http://localhost:3000/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.value.email,
+          password: formData.value.password,
+          firstName: formData.value.firstName,
+          lastName: formData.value.lastName,
+          phone: formData.value.phone || undefined
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        // Success - navigate to verification page
+        sessionStorage.setItem('signupCompleted', 'true')
+        router.push('/verify-email')
+      } else {
+        // Show error message to user
+        alert(data.error || 'An error occurred during sign up. Please try again.')
+      }
     } catch (error) {
       console.error('Sign up error:', error)
-      // Handle error (show error message to user)
+      alert('Failed to connect to server. Please check if the backend is running.')
     }
   }
 }
