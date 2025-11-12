@@ -4,6 +4,7 @@ import ListingsPage from '@/views/ListingsPage.vue'
 import PostForm from '@/views/PostForm.vue'
 import LoginPage from '@/views/LoginPage.vue'
 import SignUpPage from '@/views/SignUpPage.vue'
+import EmailVerificationPage from '@/views/EmailVerificationPage.vue'
 
 const routes = [
   {path: '/', name: 'home', component: HomePage},
@@ -11,6 +12,23 @@ const routes = [
   {path: '/post', name: 'post', component: PostForm},
   {path: '/login', name: 'login', component: LoginPage},
   {path: '/signup', name: 'signup', component: SignUpPage},
+  {
+    path: '/verify-email', 
+    name: 'verify-email', 
+    component: EmailVerificationPage,
+    beforeEnter: (to, from, next) => {
+      // Check if user has just completed signup
+      const signupCompleted = sessionStorage.getItem('signupCompleted')
+      if (signupCompleted === 'true') {
+        // Clear the flag so it can't be accessed again by typing the URL
+        sessionStorage.removeItem('signupCompleted')
+        next()
+      } else {
+        // Redirect to signup page if trying to access directly
+        next({ name: 'signup' })
+      }
+    }
+  },
 ]
 
 export default createRouter({

@@ -76,7 +76,12 @@
               id="phone" 
               v-model="formData.phone"
               class="form-input"
+              :class="{ 'input-error': showPhoneError }"
+              placeholder="xxx-xxx-xxxx"
             >
+            <p v-if="showPhoneError" class="error-message">
+              Phone number must be exactly 10 digits
+            </p>
           </div>
           
           <div class="privacy-section">
@@ -139,7 +144,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // Form data
 const formData = ref({
@@ -171,6 +178,18 @@ const showPasswordMismatch = computed(() => {
          formData.value.password !== formData.value.confirmPassword
 })
 
+// Phone number validation
+const isValidPhone = computed(() => {
+  if (!formData.value.phone) return true // Optional field, valid if empty
+  // Remove all non-digit characters for validation
+  const digitsOnly = formData.value.phone.replace(/\D/g, '')
+  return digitsOnly.length === 10
+})
+
+const showPhoneError = computed(() => {
+  return formData.value.phone.length > 0 && !isValidPhone.value
+})
+
 // Form validation
 const isFormValid = computed(() => {
   return formData.value.firstName && 
@@ -179,7 +198,8 @@ const isFormValid = computed(() => {
          isValidEmailDomain.value &&
          formData.value.password && 
          formData.value.confirmPassword &&
-         formData.value.password === formData.value.confirmPassword
+         formData.value.password === formData.value.confirmPassword &&
+         isValidPhone.value
 })
 
 // Modal functions
@@ -192,11 +212,23 @@ const closePrivacyModal = () => {
 }
 
 // Handle form submission
-const handleSignUp = () => {
+const handleSignUp = async () => {
   if (privacyAccepted.value && isFormValid.value) {
-    // TODO: Implement actual sign up logic
-    console.log('Sign up data:', formData.value)
-    alert('Account created successfully! (This is just a demo)')
+    // TODO: Implement actual sign up logic with Stytch
+    // For now, navigate to verification page
+    try {
+      // This will be replaced with actual Stytch API call
+      console.log('Sign up data:', formData.value)
+      
+      // Set flag in sessionStorage to allow access to verify-email page
+      sessionStorage.setItem('signupCompleted', 'true')
+      
+      // Navigate to email verification page
+      router.push('/verify-email')
+    } catch (error) {
+      console.error('Sign up error:', error)
+      // Handle error (show error message to user)
+    }
   }
 }
 </script>
