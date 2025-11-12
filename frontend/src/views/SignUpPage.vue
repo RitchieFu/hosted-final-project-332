@@ -57,8 +57,12 @@
               id="confirmPassword" 
               v-model="formData.confirmPassword"
               class="form-input"
+              :class="{ 'input-error': showPasswordMismatch }"
               required
             >
+            <p v-if="showPasswordMismatch" class="error-message">
+              Passwords do not match
+            </p>
           </div>
           
           <div class="form-group">
@@ -146,6 +150,12 @@ const formData = ref({
 // Privacy agreement
 const privacyAccepted = ref(false)
 const showPrivacyModal = ref(false)
+
+// Password mismatch validation
+const showPasswordMismatch = computed(() => {
+  return formData.value.confirmPassword.length > 0 && 
+         formData.value.password !== formData.value.confirmPassword
+})
 
 // Form validation
 const isFormValid = computed(() => {
@@ -242,6 +252,23 @@ const handleSignUp = () => {
 .form-input:focus {
   outline: none;
   border-color: #041E42;
+}
+
+.form-input.input-error {
+  border-color: #dc3545;
+  outline: 2px solid rgba(220, 53, 69, 0.2);
+}
+
+.form-input.input-error:focus {
+  border-color: #dc3545;
+  outline: 2px solid rgba(220, 53, 69, 0.3);
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0 0;
+  font-weight: 500;
 }
 
 .privacy-section {
