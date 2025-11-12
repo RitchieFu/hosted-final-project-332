@@ -50,8 +50,34 @@
               id="password" 
               v-model="formData.password"
               class="form-input"
+              :class="{ 'input-error': showPasswordStrengthError }"
               required
             >
+            <div v-if="formData.password.length > 0" class="password-requirements">
+              <p class="requirements-title">Password must contain:</p>
+              <ul class="requirements-list">
+                <li :class="{ 'requirement-met': hasMinLength }">
+                  <span class="requirement-icon">{{ hasMinLength ? '✓' : '○' }}</span>
+                  At least 8 characters
+                </li>
+                <li :class="{ 'requirement-met': hasUppercase }">
+                  <span class="requirement-icon">{{ hasUppercase ? '✓' : '○' }}</span>
+                  One uppercase letter
+                </li>
+                <li :class="{ 'requirement-met': hasLowercase }">
+                  <span class="requirement-icon">{{ hasLowercase ? '✓' : '○' }}</span>
+                  One lowercase letter
+                </li>
+                <li :class="{ 'requirement-met': hasNumber }">
+                  <span class="requirement-icon">{{ hasNumber ? '✓' : '○' }}</span>
+                  One number
+                </li>
+                <li :class="{ 'requirement-met': hasSymbol }">
+                  <span class="requirement-icon">{{ hasSymbol ? '✓' : '○' }}</span>
+                  One symbol
+                </li>
+              </ul>
+            </div>
           </div>
           
           <div class="form-group">
@@ -172,6 +198,39 @@ const showEmailError = computed(() => {
   return formData.value.email.length > 0 && !isValidEmailDomain.value
 })
 
+// Password strength validation
+const hasMinLength = computed(() => {
+  return formData.value.password.length >= 8
+})
+
+const hasUppercase = computed(() => {
+  return /[A-Z]/.test(formData.value.password)
+})
+
+const hasLowercase = computed(() => {
+  return /[a-z]/.test(formData.value.password)
+})
+
+const hasNumber = computed(() => {
+  return /[0-9]/.test(formData.value.password)
+})
+
+const hasSymbol = computed(() => {
+  return /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(formData.value.password)
+})
+
+const isPasswordStrong = computed(() => {
+  return hasMinLength.value && 
+         hasUppercase.value && 
+         hasLowercase.value && 
+         hasNumber.value && 
+         hasSymbol.value
+})
+
+const showPasswordStrengthError = computed(() => {
+  return formData.value.password.length > 0 && !isPasswordStrong.value
+})
+
 // Password mismatch validation
 const showPasswordMismatch = computed(() => {
   return formData.value.confirmPassword.length > 0 && 
@@ -197,6 +256,7 @@ const isFormValid = computed(() => {
          formData.value.email && 
          isValidEmailDomain.value &&
          formData.value.password && 
+         isPasswordStrong.value &&
          formData.value.confirmPassword &&
          formData.value.password === formData.value.confirmPassword &&
          isValidPhone.value
@@ -316,6 +376,52 @@ const handleSignUp = async () => {
   font-size: 0.875rem;
   margin: 0.25rem 0 0 0;
   font-weight: 500;
+}
+
+.password-requirements {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e1e5e9;
+}
+
+.requirements-title {
+  color: #041E42;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 0 0.5rem 0;
+}
+
+.requirements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.requirements-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.requirements-list li.requirement-met {
+  color: #28a745;
+}
+
+.requirement-icon {
+  font-weight: bold;
+  font-size: 1rem;
+  width: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .privacy-section {
