@@ -28,13 +28,18 @@
             >
           </div>
           
+          <div v-if="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </div>
+          
           <button 
             type="submit" 
             class="login-button"
             :class="{ 'disabled': !isFormValid }"
             :disabled="!isFormValid"
           >
-            Sign In
+            <span v-if="isLoading">Signing In...</span>
+            <span v-else>Sign In</span>
           </button>
         </form>
         
@@ -48,7 +53,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { login as loginService } from '@/services/authService'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 // Form data
 const formData = ref({
@@ -56,17 +66,51 @@ const formData = ref({
   password: ''
 })
 
+// Loading and error states
+const isLoading = ref(false)
+const errorMessage = ref('')
+
 // Form validation
 const isFormValid = computed(() => {
-  return formData.value.email && formData.value.password
+  return formData.value.email && formData.value.password && !isLoading.value
 })
 
 // Handle form submission
 const handleLogin = async () => {
-  if (isFormValid.value) {
-    // TODO: Implement actual login logic with Stytch
-    console.log('Login data:', formData.value)
-    // This will be replaced with actual Stytch API call
+  if (!isFormValid.value) {
+    return
+  }
+
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    // Call login service
+    const response = await loginService(
+      formData.value.email,
+      formData.value.password
+    )
+
+    if (response.success) {
+      // Store session in auth store
+      authStore.setSession({
+        session_token: response.session_token,
+        session_jwt: response.session_jwt,
+        user_id: response.user_id,
+        user: response.user,
+        session: response.session
+      })
+
+      // Redirect to home page
+      router.push('/')
+    } else {
+      errorMessage.value = response.error || 'Login failed. Please try again.'
+    }
+  } catch (error) {
+    console.error('Login error:', error)
+    errorMessage.value = error.message || 'Failed to connect to server. Please check if the backend is running.'
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
@@ -183,6 +227,16 @@ const handleLogin = async () => {
 
 .link:hover {
   text-decoration: underline;
+}
+
+.error-message {
+  background-color: #fee;
+  color: #c33;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  border: 1px solid #fcc;
 }
 
 /* Responsive design */
