@@ -24,17 +24,22 @@
         </span>
       </div>
       <div class="listing-meta">
-        <span class="posted-date">Posted on {{ formatDate(listing.createdAt) }}</span>
+        <span class="posted-date" v-if="isUpdated">
+          Updated at: {{ formatDate(listing.updatedAt) }}
+        </span>
+        <span class="posted-date" v-else>
+          Posted on {{ formatDate(listing.createdAt || listing.postedAt) }}
+        </span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { formatDate } from '@/utils/dateFormatter.js'
 
-defineProps({
+const props = defineProps({
   listing: {
     type: Object,
     required: true
@@ -42,6 +47,19 @@ defineProps({
 })
 
 const imageRef = ref(null)
+
+// Check if listing has been updated (updatedAt exists and is different from createdAt)
+const isUpdated = computed(() => {
+  if (!props.listing.updatedAt || !props.listing.createdAt) {
+    return false
+  }
+  
+  const createdAt = new Date(props.listing.createdAt).getTime()
+  const updatedAt = new Date(props.listing.updatedAt).getTime()
+  
+  // Consider them different if the difference is more than 1 second (to account for minor timing differences)
+  return Math.abs(updatedAt - createdAt) > 1000
+})
 
 const handleImageLoad = () => {
   if (!imageRef.value) return
