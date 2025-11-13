@@ -86,7 +86,11 @@ export const getAllListings = async (req, res) => {
       
       if (cutoffMilliseconds > 0) {
         const cutoffDate = new Date(Date.now() - cutoffMilliseconds)
-        query.createdAt = { $gte: cutoffDate }
+        // Show listings if either created OR updated within the time period
+        query.$or = [
+          { createdAt: { $gte: cutoffDate } },
+          { updatedAt: { $gte: cutoffDate } }
+        ]
       }
     }
 
