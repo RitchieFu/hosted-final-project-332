@@ -135,24 +135,28 @@ export const login = async (req, res) => {
     })
 
     // Handle Stytch-specific errors
+    //
     if (error.status_code === 400) {
       return res.status(400).json({
         success: false,
-        error: error.error_message || 'Invalid request. Please check your input.'
+        // error: error.error_message || 'Invalid request. Please check your input.'
+        error: "Invalid request. Please check your input."
       })
     }
 
     if (error.status_code === 401) {
       return res.status(401).json({
         success: false,
-        error: error.error_message || 'Invalid email or password'
+        // error: error.error_message || 'Invalid email or password'
+        error: "Invalid email or password."
       })
     }
 
     if (error.status_code === 404) {
       return res.status(404).json({
         success: false,
-        error: 'Email not found'
+        // error: error.error_message || 'Email not found'
+        error: "Invalid email or password."
       })
     }
 
@@ -169,6 +173,66 @@ export const login = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'An error occurred during login. Please try again.'
+    })
+  }
+}
+
+// Logout a user (revoke session)
+export const logout = async (req, res) => {
+  try {
+    const { session_token } = req.body
+
+    console.log('Logout request received')
+
+    // Validate required fields
+    if (!session_token) {
+      console.log('Validation failed: Missing session_token')
+      return res.status(400).json({
+        success: false,
+        error: 'Session token is required'
+      })
+    }
+
+    console.log('Revoking session with Stytch...')
+    
+    // Revoke session with Stytch
+    await stytchClient.sessions.revoke({
+      session_token: session_token
+    })
+
+    console.log('Session revoked successfully')
+
+    // Return success response
+    res.status(200).json({
+      success: true,
+      message: 'Logout successful'
+    })
+  } catch (error) {
+    console.error('Logout error:', {
+      status_code: error.status_code,
+      error_message: error.error_message || error.message,
+      error_type: error.error_type
+    })
+
+    // Handle Stytch-specific errors
+    if (error.status_code === 400) {
+      return res.status(400).json({
+        success: false,
+        error: error.error_message || 'Invalid session token'
+      })
+    }
+
+    if (error.status_code === 404) {
+      return res.status(404).json({
+        success: false,
+        error: 'Session not found'
+      })
+    }
+
+    // Generic error response
+    res.status(500).json({
+      success: false,
+      error: 'An error occurred during logout. Please try again.'
     })
   }
 }

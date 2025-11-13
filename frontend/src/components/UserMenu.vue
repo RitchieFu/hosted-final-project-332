@@ -9,8 +9,13 @@
       <button @click="handleMyListings" class="dropdown-item">
         My Listings
       </button>
-      <button @click="handleLogout" class="dropdown-item dropdown-item-danger">
-        Log out
+      <button 
+        @click="handleLogout" 
+        class="dropdown-item dropdown-item-danger"
+        :disabled="isLoggingOut"
+      >
+        <span v-if="isLoggingOut">Logging out...</span>
+        <span v-else>Log out</span>
       </button>
     </div>
   </div>
@@ -18,11 +23,15 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { logout as logoutService } from '@/services/authService'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const showDropdown = ref(false)
 const dropdownRef = ref(null)
+const isLoggingOut = ref(false)
 
 // Get user's first name
 const firstName = computed(() => {
@@ -55,10 +64,36 @@ const handleMyListings = () => {
   // TODO: Navigate to My Listings page
 }
 
-const handleLogout = () => {
-  console.log('Logout clicked')
+const handleLogout = async () => {
+  if (isLoggingOut.value) {
+    return // Prevent multiple clicks
+  }
+
+  isLoggingOut.value = true
   showDropdown.value = false
-  // TODO: Implement logout logic
+
+  try {
+    // Get session token before clearing
+    const sessionToken = authStore.sessionToken
+
+    // Revoke session on backend
+    if (sessionToken) {
+      await logoutService(sessionToken)
+    }
+
+    // Clear session from store (this also clears localStorage)
+    authStore.clearSession()
+
+    // Redirect to login page
+    router.push('/login')
+  } catch (error) {
+    console.error('Logout error:', error)
+    // Even if backend logout fails, clear local session
+    authStore.clearSession()
+    router.push('/login')
+  } finally {
+    isLoggingOut.value = false
+  }
 }
 
 onMounted(() => {
@@ -150,8 +185,13 @@ onUnmounted(() => {
   border-top: 1px solid #e1e5e9;
 }
 
-.dropdown-item-danger:hover {
+.dropdown-item-danger:hover:not(:disabled) {
   background-color: #fee;
+}
+
+.dropdown-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Responsive design */

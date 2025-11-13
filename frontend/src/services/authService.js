@@ -33,12 +33,36 @@ export const login = async (email, password) => {
 }
 
 /**
- * Logout the current user (client-side only)
- * The actual session revocation would be handled by the backend if needed
+ * Logout the current user and revoke the session
+ * @param {string} sessionToken - The session token to revoke
+ * @returns {Promise<Object>} Response data
  */
-export const logout = async () => {
-  // For now, just clear client-side session
-  // In the future, you might want to call a backend endpoint to revoke the session
-  return Promise.resolve()
+export const logout = async (sessionToken) => {
+  try {
+    if (!sessionToken) {
+      throw new Error('Session token is required')
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_token: sessionToken
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Logout failed')
+    }
+
+    return data
+  } catch (error) {
+    console.error('Logout service error:', error)
+    throw error
+  }
 }
 
