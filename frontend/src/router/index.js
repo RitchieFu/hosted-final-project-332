@@ -6,6 +6,7 @@ import LoginPage from '@/views/LoginPage.vue'
 import SignUpPage from '@/views/SignUpPage.vue'
 import EmailVerificationPage from '@/views/EmailVerificationPage.vue'
 import ProfilePage from '@/views/ProfilePage.vue'
+import AccountDeletedPage from '@/views/AccountDeletedPage.vue'
 
 const routes = [
   {path: '/', name: 'home', component: HomePage},
@@ -28,6 +29,23 @@ const routes = [
       } else {
         // Redirect to signup page if trying to access directly
         next({ name: 'signup' })
+      }
+    }
+  },
+  {
+    path: '/account-deleted', 
+    name: 'account-deleted', 
+    component: AccountDeletedPage,
+    beforeEnter: (to, from, next) => {
+      // Check if user has just deleted their account
+      const accountDeleted = sessionStorage.getItem('accountDeleted')
+      if (accountDeleted === 'true') {
+        // Clear the flag so it can't be accessed again by typing the URL
+        sessionStorage.removeItem('accountDeleted')
+        next()
+      } else {
+        // Redirect to home page if trying to access directly
+        next({ name: 'home' })
       }
     }
   },

@@ -122,9 +122,14 @@ const handleDeleteAccount = async () => {
     // Delete user account (session token authenticates the request)
     await deleteUser(sessionToken)
 
-    // Clear session and redirect to home
+    // Clear session
     authStore.clearSession()
-    router.push('/')
+    
+    // Set flag to allow access to account deleted page
+    sessionStorage.setItem('accountDeleted', 'true')
+    
+    // Redirect to account deleted confirmation page
+    router.push('/account-deleted')
   } catch (error) {
     console.error('Delete account error:', error)
     alert(error.message || 'Failed to delete account. Please try again.')

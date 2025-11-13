@@ -1,17 +1,12 @@
 <template>
-  <div class="verification-container">
-    <div class="verification-card">
-      <!-- <h1 class="verification-title">Check Your Email</h1> -->
-      <h1 class="verification-title">Account Succesfully Created!</h1>
-      <!-- <p class="verification-message">
-        A link has been sent to your account if the provided email exists. Please click on the link to verify your email.
-      </p> -->
-      <p class="verification-message">
-        TODO: Send a verification email to the user before being able to login. 
+  <div class="deleted-container">
+    <div class="deleted-card">
+      <h1 class="deleted-title">Account Deleted</h1>
+      <p class="deleted-message">
+        You have successfully deleted your account!
       </p>
-      <div class="verification-actions">
-        <RouterLink to="/login" class="link-button">Go to Login</RouterLink>
-        <RouterLink to="/" class="link-button secondary">Return to Home</RouterLink>
+      <div class="deleted-actions">
+        <RouterLink to="/" class="link-button">Go to Home</RouterLink>
       </div>
     </div>
   </div>
@@ -22,7 +17,7 @@ import { RouterLink } from 'vue-router'
 </script>
 
 <style scoped>
-.verification-container {
+.deleted-container {
   min-height: 100vh;
   background-color: #f5f5f5;
   padding: 6rem 1rem 2rem 1rem;
@@ -31,7 +26,7 @@ import { RouterLink } from 'vue-router'
   justify-content: center;
 }
 
-.verification-card {
+.deleted-card {
   background: white;
   padding: 3rem 2rem;
   border-radius: 8px;
@@ -41,27 +36,21 @@ import { RouterLink } from 'vue-router'
   text-align: center;
 }
 
-.verification-icon {
-  margin-bottom: 1.5rem;
-  display: flex;
-  justify-content: center;
-}
-
-.verification-title {
+.deleted-title {
   color: #041E42;
   font-size: 2rem;
   font-weight: 600;
   margin: 0 0 1rem 0;
 }
 
-.verification-message {
+.deleted-message {
   color: #666;
   font-size: 1rem;
   line-height: 1.6;
   margin: 0 0 2rem 0;
 }
 
-.verification-actions {
+.deleted-actions {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -88,28 +77,17 @@ import { RouterLink } from 'vue-router'
   transform: translateY(-1px);
 }
 
-.link-button.secondary {
-  background-color: transparent;
-  color: #041E42;
-  border: 2px solid #041E42;
-}
-
-.link-button.secondary:hover {
-  background-color: #f8f9fa;
-  transform: translateY(-1px);
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
-  .verification-container {
+  .deleted-container {
     padding: 1rem;
   }
   
-  .verification-card {
+  .deleted-card {
     padding: 2rem 1.5rem;
   }
   
-  .verification-title {
+  .deleted-title {
     font-size: 1.75rem;
   }
 }
