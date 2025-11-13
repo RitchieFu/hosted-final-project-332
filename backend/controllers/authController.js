@@ -1,4 +1,5 @@
 import stytchClient from '../config/stytch.js'
+import { deleteAllListingsByUser } from './listingsController.js'
 
 // Sign up a new user
 export const signUp = async (req, res) => {
@@ -256,6 +257,19 @@ export const deleteUser = async (req, res) => {
       user_id: user_id
     })
 
+    // Delete all listings created by this user first
+    console.log('Deleting user listings...')
+    let deletedListingsCount = 0
+    try {
+      const listingsResult = await deleteAllListingsByUser(user_id)
+      deletedListingsCount = listingsResult.deletedCount
+      console.log(`Deleted ${deletedListingsCount} listings for user ${user_id}`)
+    } catch (error) {
+      console.error('Error deleting user listings:', error)
+      // Continue with account deletion even if listing deletion fails
+      // (user might not have any listings)
+    }
+
     console.log('Deleting user with Stytch...')
     
     // Delete user with Stytch
@@ -264,14 +278,16 @@ export const deleteUser = async (req, res) => {
     })
 
     console.log('User deleted successfully:', {
-      user_id: user_id
+      user_id: user_id,
+      listings_deleted: deletedListingsCount
     })
 
     // Return success response
     res.status(200).json({
       success: true,
       message: 'User account deleted successfully',
-      user_id: user_id
+      user_id: user_id,
+      listings_deleted: deletedListingsCount
     })
   } catch (error) {
     console.error('Delete user error:', {

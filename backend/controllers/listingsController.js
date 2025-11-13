@@ -284,6 +284,31 @@ export const deleteListing = async (req, res) => {
 }
 
 /**
+ * Delete all listings by a user ID
+ * This is used when a user deletes their account
+ * @param {string} userId - Stytch user ID
+ * @returns {Promise<{deletedCount: number}>} Number of listings deleted
+ */
+export const deleteAllListingsByUser = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error('User ID is required')
+    }
+
+    const result = await Listing.deleteMany({ createdBy: userId })
+    
+    console.log(`Deleted ${result.deletedCount} listings for user ${userId}`)
+    
+    return {
+      deletedCount: result.deletedCount
+    }
+  } catch (error) {
+    console.error('Error deleting listings by user:', error)
+    throw error
+  }
+}
+
+/**
  * Get listings by user
  * GET /api/listings/user/:userId
  */
