@@ -237,3 +237,70 @@ export const logout = async (req, res) => {
   }
 }
 
+// Delete a user account
+// Note: This requires authentication middleware to set req.authenticatedUserId
+export const deleteUser = async (req, res) => {
+  try {
+    // Get user_id from authenticated session (set by middleware)
+    const user_id = req.authenticatedUserId
+
+    if (!user_id) {
+      console.log('Delete user failed: No authenticated user ID')
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      })
+    }
+
+    console.log('Delete user request received:', {
+      user_id: user_id
+    })
+
+    console.log('Deleting user with Stytch...')
+    
+    // Delete user with Stytch
+    await stytchClient.users.delete({
+      user_id: user_id
+    })
+
+    console.log('User deleted successfully:', {
+      user_id: user_id
+    })
+
+    // Return success response
+    res.status(200).json({
+      success: true,
+      message: 'User account deleted successfully',
+      user_id: user_id
+    })
+  } catch (error) {
+    console.error('Delete user error:', {
+      status_code: error.status_code,
+      error_message: error.error_message || error.message,
+      error_type: error.error_type,
+      user_id: req.authenticatedUserId
+    })
+
+    // Handle Stytch-specific errors
+    if (error.status_code === 400) {
+      return res.status(400).json({
+        success: false,
+        error: error.error_message || 'Invalid user ID'
+      })
+    }
+
+    if (error.status_code === 404) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      })
+    }
+
+    // Generic error response
+    res.status(500).json({
+      success: false,
+      error: 'An error occurred while deleting the account. Please try again.'
+    })
+  }
+}
+

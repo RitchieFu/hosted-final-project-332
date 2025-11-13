@@ -6,6 +6,9 @@
     </button>
     
     <div v-if="showDropdown" class="dropdown-menu">
+      <button @click="handleProfile" class="dropdown-item">
+        Profile
+      </button>
       <button @click="handleMyListings" class="dropdown-item">
         My Listings
       </button>
@@ -55,6 +58,12 @@ const handleClickOutside = (event) => {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
     showDropdown.value = false
   }
+}
+
+// Handlers
+const handleProfile = () => {
+  showDropdown.value = false
+  router.push('/profile')
 }
 
 // Placeholder handlers

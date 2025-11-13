@@ -66,3 +66,35 @@ export const logout = async (sessionToken) => {
   }
 }
 
+/**
+ * Delete a user account
+ * @param {string} sessionToken - The session token for authentication
+ * @returns {Promise<Object>} Response data
+ */
+export const deleteUser = async (sessionToken) => {
+  try {
+    if (!sessionToken) {
+      throw new Error('Session token is required')
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/user`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionToken}`
+      }
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to delete account')
+    }
+
+    return data
+  } catch (error) {
+    console.error('Delete user service error:', error)
+    throw error
+  }
+}
+
