@@ -1,0 +1,293 @@
+import Listing from '../models/Listing.js'
+
+/**
+ * Create a new listing
+ * POST /api/listings
+ */
+export const createListing = async (req, res) => {
+  try {
+    const { title, description, tags, image } = req.body
+    const userId = req.authenticatedUserId // From auth middleware
+
+    // Validate required fields
+    if (!title || !description) {
+      return res.status(400).json({
+        success: false,
+        error: 'Title and description are required'
+      })
+    }
+
+    // Create new listing
+    const listing = new Listing({
+      title,
+      description,
+      tags: tags || [],
+      image: image || null,
+      createdBy: userId,
+      createdByEmail: null // Can be populated from Stytch if needed
+    })
+
+    const savedListing = await listing.save()
+
+    console.log('Listing created successfully:', {
+      listingId: savedListing._id,
+      title: savedListing.title,
+      createdBy: savedListing.createdBy,
+      createdAt: savedListing.createdAt 
+    })
+
+    res.status(201).json({
+      success: true,
+      message: 'Listing created successfully',
+      data: savedListing
+    })
+  } catch (error) {
+    console.error('Error creating listing:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create listing',
+      details: error.message
+    })
+  }
+}
+
+/**
+ * Get all listings
+ * GET /api/listings
+ * Optional query params: tags (comma-separated), limit, skip
+ */
+export const getAllListings = async (req, res) => {
+  try {
+    const { tags, limit = 50, skip = 0 } = req.query
+
+    // Build query
+    const query = {}
+    
+    // Filter by tags if provided
+    if (tags) {
+      const tagArray = tags.split(',').map(tag => tag.trim())
+      query.tags = { $in: tagArray }
+    }
+
+    // Execute query with pagination
+    const listings = await Listing.find(query)
+      .sort({ createdAt: -1 }) // Newest first
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .lean() // Return plain JavaScript objects
+
+    // Ensure dates are properly serialized (lean() returns Date objects)
+    const serializedListings = listings.map(listing => ({
+      ...listing,
+      createdAt: listing.createdAt ? listing.createdAt.toISOString() : listing.createdAt,
+      updatedAt: listing.updatedAt ? listing.updatedAt.toISOString() : listing.updatedAt
+    }))
+
+    // Get total count for pagination
+    const total = await Listing.countDocuments(query)
+
+    res.json({
+      success: true,
+      data: serializedListings,
+      pagination: {
+        total,
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        hasMore: parseInt(skip) + serializedListings.length < total
+      }
+    })
+  } catch (error) {
+    console.error('Error fetching listings:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch listings',
+      details: error.message
+    })
+  }
+}
+
+/**
+ * Get a single listing by ID
+ * GET /api/listings/:id
+ */
+export const getListingById = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const listing = await Listing.findById(id).lean()
+
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        error: 'Listing not found'
+      })
+    }
+
+    res.json({
+      success: true,
+      data: listing
+    })
+  } catch (error) {
+    console.error('Error fetching listing:', error)
+    
+    // Handle invalid ObjectId format
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid listing ID format'
+      })
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch listing',
+      details: error.message
+    })
+  }
+}
+
+/**
+ * Update a listing
+ * PUT /api/listings/:id
+ * Only the creator can update their listing
+ */
+export const updateListing = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { title, description, tags, image } = req.body
+    const userId = req.authenticatedUserId
+
+    // Find the listing
+    const listing = await Listing.findById(id)
+
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        error: 'Listing not found'
+      })
+    }
+
+    // Check if user is the creator
+    if (listing.createdBy !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'You can only update your own listings'
+      })
+    }
+
+    // Update fields
+    if (title !== undefined) listing.title = title
+    if (description !== undefined) listing.description = description
+    if (tags !== undefined) listing.tags = tags
+    if (image !== undefined) listing.image = image
+
+    const updatedListing = await listing.save()
+
+    res.json({
+      success: true,
+      message: 'Listing updated successfully',
+      data: updatedListing
+    })
+  } catch (error) {
+    console.error('Error updating listing:', error)
+    
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid listing ID format'
+      })
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update listing',
+      details: error.message
+    })
+  }
+}
+
+/**
+ * Delete a listing
+ * DELETE /api/listings/:id
+ * Only the creator can delete their listing
+ */
+export const deleteListing = async (req, res) => {
+  try {
+    const { id } = req.params
+    const userId = req.authenticatedUserId
+
+    // Find the listing
+    const listing = await Listing.findById(id)
+
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        error: 'Listing not found'
+      })
+    }
+
+    // Check if user is the creator
+    if (listing.createdBy !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'You can only delete your own listings'
+      })
+    }
+
+    await Listing.findByIdAndDelete(id)
+
+    res.json({
+      success: true,
+      message: 'Listing deleted successfully'
+    })
+  } catch (error) {
+    console.error('Error deleting listing:', error)
+    
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid listing ID format'
+      })
+    }
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete listing',
+      details: error.message
+    })
+  }
+}
+
+/**
+ * Get listings by user
+ * GET /api/listings/user/:userId
+ */
+export const getListingsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    const listings = await Listing.find({ createdBy: userId })
+      .sort({ createdAt: -1 })
+      .lean()
+
+    // Ensure dates are properly serialized (lean() returns Date objects)
+    const serializedListings = listings.map(listing => ({
+      ...listing,
+      createdAt: listing.createdAt ? listing.createdAt.toISOString() : listing.createdAt,
+      updatedAt: listing.updatedAt ? listing.updatedAt.toISOString() : listing.updatedAt
+    }))
+
+    res.json({
+      success: true,
+      data: serializedListings
+    })
+  } catch (error) {
+    console.error('Error fetching user listings:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch user listings',
+      details: error.message
+    })
+  }
+}
+

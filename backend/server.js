@@ -3,7 +3,9 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { connectDB } from './config/db.js'
 import authRoutes from './routes/auth.js'
+import listingsRoutes from './routes/listings.js'
 
 // Get current directory for ES modules
 const __filename = fileURLToPath(import.meta.url)
@@ -37,8 +39,17 @@ app.get('/api/test', (req, res) => {
   })
 })
 
+// Connect to MongoDB
+connectDB().catch(err => {
+  console.error('Failed to connect to MongoDB:', err)
+  process.exit(1)
+})
+
 // Authentication routes
 app.use('/api/auth', authRoutes)
+
+// Listings routes
+app.use('/api/listings', listingsRoutes)
 
 // Start server
 app.listen(PORT, () => {
