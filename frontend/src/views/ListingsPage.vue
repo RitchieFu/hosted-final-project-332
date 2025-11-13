@@ -13,17 +13,29 @@
 
     <!-- Listings -->
     <div class="listings-container-centered">
-      <div class="masonry-grid">
-        <div v-for="listing in filteredListings" :key="listing.id" class="masonry-item">
-          <ListingCard :listing="listing" />
-        </div>
+      <div class="listings-grid" ref="listingsGridRef">
+        <ListingCard 
+          v-for="listing in filteredListings" 
+          :key="listing.id" 
+          :listing="listing" 
+        />
+      </div>
+      
+      <!-- Loading indicator -->
+      <div v-if="loadingMore" class="loading-more">
+        <p>Loading more listings...</p>
+      </div>
+      
+      <!-- End of results message -->
+      <div v-if="!hasMore && listings.length > 0 && !loadingMore" class="end-of-results">
+        <p>You've reached the end of the listings</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import ListingCard from '@/components/ListingCard.vue'
 import FilterSidebar from '@/components/FilterSidebar.vue'
 import { getListings, generateRandomDate } from '@/services/listingsService'
@@ -33,6 +45,16 @@ const listings = ref([])
 
 // Filter state
 const selectedFilters = ref([])
+
+// Pagination state
+const pagination = ref({
+  limit: 10, // Load 10 listings at a time
+  skip: 0,
+  hasMore: true,
+  total: 0
+})
+const loadingMore = ref(false)
+const listingsGridRef = ref(null)
 
 // Mock data for demonstration
 const mockListings = [
@@ -154,36 +176,165 @@ const filteredListings = computed(() => {
 })
 
 
+// Check if page needs more content (not scrollable yet)
+const checkIfNeedsMoreContent = () => {
+  // Wait a bit for DOM to render
+  setTimeout(() => {
+    const documentHeight = document.documentElement.scrollHeight
+    const windowHeight = window.innerHeight
+    
+    // If page isn't scrollable and we have more listings, load more
+    if (documentHeight <= windowHeight && pagination.value.hasMore && !loadingMore.value) {
+      console.log('Page not scrollable, loading more content automatically')
+      loadMoreListings()
+    }
+  }, 500)
+}
+
 // Load listings on component mount
-onMounted(() => {
-  loadListings()
+onMounted(async () => {
+  await loadListings(true) // Reset and load initial listings
+  window.addEventListener('scroll', handleScroll)
+  checkIfNeedsMoreContent()
 })
 
-// Function to load listings from API and combine with mock data
-const loadListings = async () => {
+// Clean up scroll listener
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+})
+
+// Function to load listings from API (initial load)
+const loadListings = async (reset = false) => {
   try {
-    // Get user-submitted listings from API
-    const userListings = await getListings()
+    if (reset) {
+      listings.value = []
+      pagination.value.skip = 0
+      pagination.value.hasMore = true
+    }
     
-    // Add random dates to mock listings if they don't have postedAt
-    // const mockListingsWithDates = mockListings.map(listing => ({
-    //   ...listing,
-    //   postedAt: listing.postedAt || generateRandomDate()
-    // }))
+    // Get user-submitted listings from API (last 7 days only)
+    const result = await getListings({ 
+      days: 7,
+      limit: pagination.value.limit,
+      skip: pagination.value.skip
+    })
     
-    // Combine user listings (newest first) with mock data
-    // const allListings = [...userListings, ...mockListingsWithDates]
+    // Append new listings to existing ones
+    if (reset) {
+      listings.value = result.listings
+    } else {
+      listings.value = [...listings.value, ...result.listings]
+    }
     
-    // Update the reactive listings
-    listings.value = userListings
+    // Update pagination state
+    pagination.value = {
+      ...pagination.value,
+      ...result.pagination,
+      hasMore: result.pagination.hasMore
+    }
     
-    // console.log(`Loaded ${userListings.length} user listings and ${mockListings.length} mock listings`)
+    // Debug logging
+    console.log('Loaded listings:', {
+      count: result.listings.length,
+      total: result.pagination.total,
+      skip: pagination.value.skip,
+      hasMore: result.pagination.hasMore,
+      totalListings: listings.value.length
+    })
   } catch (error) {
     console.error('Error loading listings:', error)
-    // Fallback to mock data only
-    listings.value = mockListings
+    // Fallback to mock data only on initial load
+    if (listings.value.length === 0) {
+      listings.value = mockListings
+    }
   }
 }
+
+// Function to load more listings (for infinite scroll)
+const loadMoreListings = async () => {
+  if (loadingMore.value || !pagination.value.hasMore) {
+    console.log('Skipping load more:', { loadingMore: loadingMore.value, hasMore: pagination.value.hasMore })
+    return
+  }
+  
+  try {
+    loadingMore.value = true
+    const newSkip = pagination.value.skip + pagination.value.limit
+    
+    console.log('Loading more listings:', {
+      currentSkip: pagination.value.skip,
+      newSkip,
+      limit: pagination.value.limit
+    })
+    
+    const result = await getListings({ 
+      days: 7,
+      limit: pagination.value.limit,
+      skip: newSkip
+    })
+    
+    // Append new listings
+    listings.value = [...listings.value, ...result.listings]
+    
+    // Update pagination state
+    pagination.value = {
+      ...pagination.value,
+      skip: newSkip,
+      ...result.pagination,
+      hasMore: result.pagination.hasMore
+    }
+    
+    console.log('Loaded more listings:', {
+      newCount: result.listings.length,
+      totalListings: listings.value.length,
+      hasMore: result.pagination.hasMore
+    })
+    
+    // Check if we need to load more after this batch (page might still not be scrollable)
+    if (result.pagination.hasMore) {
+      setTimeout(() => {
+        checkIfNeedsMoreContent()
+      }, 300)
+    }
+  } catch (error) {
+    console.error('Error loading more listings:', error)
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+// Scroll detection for infinite scroll (with throttling)
+let scrollTimeout = null
+const handleScroll = () => {
+  // Throttle scroll events
+  if (scrollTimeout) {
+    return
+  }
+  
+  scrollTimeout = setTimeout(() => {
+    scrollTimeout = null
+    
+    if (loadingMore.value || !pagination.value.hasMore) {
+      return
+    }
+    
+    // Check if user has scrolled near the bottom (within 300px)
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    const windowHeight = window.innerHeight
+    const documentHeight = document.documentElement.scrollHeight
+    
+    // Check if user has scrolled near the bottom
+    if (scrollTop + windowHeight >= documentHeight - 300) {
+      loadMoreListings()
+    }
+  }, 100) // Throttle to every 100ms
+}
+
+// Computed property for hasMore
+const hasMore = computed(() => pagination.value.hasMore)
 </script>
 
 <style scoped>
@@ -222,39 +373,28 @@ html { overflow-y: scroll; }
   padding: 0 2rem;
 }
 
-.masonry-grid {
-  column-width: 320px; /* browser decides column count based on width */
-  column-gap: 1.5rem;
-  contain: layout;
-  will-change: auto;
-}
-
-.masonry-item {
-  break-inside: avoid; /* keep a card intact */
-  margin-bottom: 1.5rem;
-  display: inline-block; /* needed so items respect column flow */
-  width: 100%;
-  contain: layout style paint;
-  will-change: transform;
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
 }
 
 /* Responsive design */
-@media (max-width: 1100px) {
-  .masonry-grid {
-    column-count: 3;
-  }
-  .masonry-item {
-    margin-bottom: 1rem;
+@media (max-width: 900px) {
+  .listings-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
 }
 
-@media (max-width: 700px) and (max-width: 1099.98px) {
+@media (max-width: 600px) {
   .listings-container {
     padding: 1rem;
   }
 
-  .masonry-grid {
-    column-count: 2;
+  .listings-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .page-title {
@@ -264,19 +404,22 @@ html { overflow-y: scroll; }
   .page-subtitle {
     font-size: 1rem;
   }
-}
-
-@media (max-width: 699.98px) {
-  .listings-container {
-    padding: 0.5rem;
-  }
-
-  .masonry-grid {
-    column-count: 1;
-  }
   
   .listings-container-centered {
     padding: 0 1rem;
   }
+}
+
+.loading-more {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.end-of-results {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+  font-size: 0.9rem;
 }
 </style>

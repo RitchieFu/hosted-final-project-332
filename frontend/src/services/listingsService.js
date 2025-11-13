@@ -28,9 +28,36 @@ const transformListing = (listing) => {
 }
 
 // Get all listings from API
-export const getListings = async () => {
+// Optional parameters:
+// - hours: Filter listings created within the last X hours (e.g., { hours: 12 })
+// - days: Filter listings created within the last X days (e.g., { days: 7 })
+// - limit: Number of listings per page (default: 50)
+// - skip: Number of listings to skip for pagination (default: 0)
+// Returns: { listings: [...], pagination: { total, limit, skip, hasMore } }
+export const getListings = async (options = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/listings`, {
+    const { hours, days, limit, skip } = options
+    
+    // Build query string
+    const queryParams = new URLSearchParams()
+    if (hours && hours > 0) {
+      queryParams.append('hours', hours.toString())
+    } else if (days && days > 0) {
+      queryParams.append('days', days.toString())
+    }
+    if (limit && limit > 0) {
+      queryParams.append('limit', limit.toString())
+    }
+    if (skip && skip >= 0) {
+      queryParams.append('skip', skip.toString())
+    }
+    
+    const queryString = queryParams.toString()
+    const url = queryString 
+      ? `${API_BASE_URL}/listings?${queryString}`
+      : `${API_BASE_URL}/listings`
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -45,11 +72,29 @@ export const getListings = async () => {
 
     // Transform listings to include id field
     const listings = (data.data || []).map(transformListing)
-    return listings
+    
+    // Return listings with pagination info
+    return {
+      listings,
+      pagination: data.pagination || {
+        total: listings.length,
+        limit: limit || 50,
+        skip: skip || 0,
+        hasMore: false
+      }
+    }
   } catch (error) {
     console.error('Error loading listings from API:', error)
-    // Return empty array on error instead of throwing
-    return []
+    // Return empty result on error
+    return {
+      listings: [],
+      pagination: {
+        total: 0,
+        limit: options.limit || 50,
+        skip: options.skip || 0,
+        hasMore: false
+      }
+    }
   }
 }
 
@@ -166,10 +211,10 @@ export const getListingsByUser = async (userId) => {
   }
 }
 
-// Get listings count
+// Get listings count (last 7 days only)
 export const getListingsCount = async () => {
-  const listings = await getListings()
-  return listings.length
+  const result = await getListings({ days: 7 })
+  return result.pagination.total
 }
 
 // Generate a random date between September 1, 2025 and October 21, 2025

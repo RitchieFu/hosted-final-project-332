@@ -1,15 +1,21 @@
 <template>
   <div class="listing-card">
-    <div v-if="listing.image" class="image-container">
+    <div class="image-container">
       <img 
+        v-if="listing.image" 
         :src="listing.image" 
         :alt="listing.title" 
         class="listing-image"
-        @load="handleImageLoad"
-        ref="imageRef"
         loading="lazy"
         decoding="async"
       />
+      <div v-else class="image-placeholder">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+      </div>
     </div>
     <div class="content">
       <h3 class="listing-title">{{ listing.title }}</h3>
@@ -36,7 +42,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { formatDate } from '@/utils/dateFormatter.js'
 
 const props = defineProps({
@@ -45,8 +51,6 @@ const props = defineProps({
     required: true
   }
 })
-
-const imageRef = ref(null)
 
 // Check if listing has been updated (updatedAt exists and is different from createdAt)
 const isUpdated = computed(() => {
@@ -60,43 +64,6 @@ const isUpdated = computed(() => {
   // Consider them different if the difference is more than 1 second (to account for minor timing differences)
   return Math.abs(updatedAt - createdAt) > 1000
 })
-
-const handleImageLoad = () => {
-  if (!imageRef.value) return
-  
-  const img = imageRef.value
-  const container = img.parentElement
-  
-  // Use requestAnimationFrame for better performance
-  requestAnimationFrame(() => {
-    // Get the natural dimensions of the image
-    const naturalWidth = img.naturalWidth
-    const naturalHeight = img.naturalHeight
-    
-    if (naturalWidth === 0 || naturalHeight === 0) return
-    
-    const aspectRatio = naturalWidth / naturalHeight
-    
-    // Set container dimensions based on aspect ratio, but respect max-height
-    const containerWidth = container.offsetWidth
-    let containerHeight
-    
-    if (aspectRatio > 1) {
-      // Landscape image - make it shorter
-      containerHeight = containerWidth * 0.75
-    } else if (aspectRatio < 1) {
-      // Portrait image - make it taller
-      containerHeight = containerWidth * 1.5
-    } else {
-      // Square image - keep it square
-      containerHeight = containerWidth
-    }
-    
-    // Ensure we don't exceed the max-height of 300px
-    containerHeight = Math.min(containerHeight, 300)
-    container.style.height = `${containerHeight}px`
-  })
-}
 </script>
 
 <style scoped>
@@ -123,10 +90,13 @@ const handleImageLoad = () => {
 
 .image-container {
   width: 100%;
-  max-height: 300px;
+  aspect-ratio: 1 / 1; /* Square image */
   overflow: hidden;
   position: relative;
-  contain: layout;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -141,6 +111,22 @@ const handleImageLoad = () => {
 
 .listing-card:hover .listing-image {
   transform: scale(1.05);
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  background-color: #f5f5f5;
+}
+
+.image-placeholder svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
 }
 
 .content {

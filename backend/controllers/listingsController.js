@@ -54,11 +54,13 @@ export const createListing = async (req, res) => {
 /**
  * Get all listings
  * GET /api/listings
- * Optional query params: tags (comma-separated), limit, skip
+ * Optional query params: tags (comma-separated), limit, skip, hours, days
+ * - hours: Filter listings created within the last X hours (e.g., ?hours=12)
+ * - days: Filter listings created within the last X days (e.g., ?days=7)
  */
 export const getAllListings = async (req, res) => {
   try {
-    const { tags, limit = 50, skip = 0 } = req.query
+    const { tags, limit = 50, skip = 0, hours, days } = req.query
 
     // Build query
     const query = {}
@@ -67,6 +69,25 @@ export const getAllListings = async (req, res) => {
     if (tags) {
       const tagArray = tags.split(',').map(tag => tag.trim())
       query.tags = { $in: tagArray }
+    }
+
+    // Filter by time period if provided (hours takes precedence over days)
+    if (hours || days) {
+      const hoursValue = hours ? parseInt(hours) : null
+      const daysValue = days ? parseInt(days) : null
+      
+      // Calculate cutoff date in milliseconds
+      let cutoffMilliseconds = 0
+      if (hoursValue && hoursValue > 0) {
+        cutoffMilliseconds = hoursValue * 60 * 60 * 1000 // Convert hours to milliseconds
+      } else if (daysValue && daysValue > 0) {
+        cutoffMilliseconds = daysValue * 24 * 60 * 60 * 1000 // Convert days to milliseconds
+      }
+      
+      if (cutoffMilliseconds > 0) {
+        const cutoffDate = new Date(Date.now() - cutoffMilliseconds)
+        query.createdAt = { $gte: cutoffDate }
+      }
     }
 
     // Execute query with pagination
