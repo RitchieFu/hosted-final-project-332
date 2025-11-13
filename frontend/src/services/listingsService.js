@@ -115,7 +115,7 @@ export const deleteListing = async (id) => {
     return true
   } catch (error) {
     console.error('Error deleting listing from API:', error)
-    return false
+    throw error // Re-throw so caller can handle it
   }
 }
 

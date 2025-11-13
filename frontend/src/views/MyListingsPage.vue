@@ -19,13 +19,24 @@
     <!-- Listings -->
     <div v-else class="listings-list-container">
       <div v-for="listing in listings" :key="listing.id" class="listing-item">
-        <!-- Edit Button -->
-        <button @click="openEditModal(listing)" class="edit-button" aria-label="Edit listing">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-        </button>
+        <!-- Header Row: Title and Action Buttons -->
+        <div class="listing-item-header">
+          <h3 class="listing-item-title">{{ listing.title }}</h3>
+          <div class="action-buttons">
+            <button @click="openEditModal(listing)" class="action-button edit-button" aria-label="Edit listing">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button @click="openDeleteModal(listing)" class="action-button delete-button" aria-label="Delete listing">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
         
         <!-- Image -->
         <div v-if="listing.image" class="listing-item-image">
@@ -34,7 +45,6 @@
         
         <!-- Content -->
         <div class="listing-item-content">
-          <h3 class="listing-item-title">{{ listing.title }}</h3>
           <p v-if="listing.description" class="listing-item-description">{{ listing.description }}</p>
           
           <!-- Tags -->
@@ -59,6 +69,15 @@
       @close="closeEditModal"
       @saved="handleListingSaved"
     />
+
+    <!-- Delete Confirmation Modal -->
+    <DeleteConfirmationModal
+      :is-open="isDeleteModalOpen"
+      :listing-title="selectedListing?.title || ''"
+      :is-deleting="isDeleting"
+      @close="closeDeleteModal"
+      @confirm="handleDeleteConfirm"
+    />
   </div>
 </template>
 
@@ -66,16 +85,19 @@
 import { ref, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { getListingsByUser } from '@/services/listingsService'
+import { getListingsByUser, deleteListing } from '@/services/listingsService'
 import { formatDate } from '@/utils/dateFormatter.js'
 import EditListingModal from '@/components/EditListingModal.vue'
+import DeleteConfirmationModal from '@/components/DeleteConfirmationModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const listings = ref([])
 const loading = ref(true)
 const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
 const selectedListing = ref(null)
+const isDeleting = ref(false)
 
 // Load user's listings on component mount
 onMounted(async () => {
@@ -125,6 +147,42 @@ const handleListingSaved = async () => {
   // Reload listings after successful edit
   await loadMyListings()
 }
+
+// Delete modal functions
+const openDeleteModal = (listing) => {
+  selectedListing.value = listing
+  isDeleteModalOpen.value = true
+}
+
+const closeDeleteModal = () => {
+  isDeleteModalOpen.value = false
+  selectedListing.value = null
+}
+
+const handleDeleteConfirm = async () => {
+  if (!selectedListing.value || !selectedListing.value.id) {
+    console.error('No listing ID available for deletion')
+    return
+  }
+
+  try {
+    isDeleting.value = true
+    
+    // Delete listing via API
+    await deleteListing(selectedListing.value.id)
+    
+    // Close modal
+    closeDeleteModal()
+    
+    // Reload listings after successful deletion
+    await loadMyListings()
+  } catch (error) {
+    console.error('Error deleting listing:', error)
+    alert(error.message || 'There was an error deleting your listing. Please try again.')
+  } finally {
+    isDeleting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -158,7 +216,7 @@ const handleListingSaved = async () => {
   max-width: 80%;
   margin: 2rem auto 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.5rem;
 }
 
@@ -171,17 +229,39 @@ const handleListingSaved = async () => {
   flex-direction: column;
   gap: 1rem;
   transition: box-shadow 0.3s ease;
-  position: relative;
 }
 
 .listing-item:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.edit-button {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+.listing-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  min-width: 0;
+}
+
+.listing-item-title {
+  color: #041e42;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.action-button {
   background-color: #041E42;
   color: white;
   border: none;
@@ -193,16 +273,31 @@ const handleListingSaved = async () => {
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 10;
   padding: 0;
+  flex-shrink: 0;
+}
+
+.action-button:hover {
+  transform: scale(1.05);
+}
+
+.action-button:active {
+  transform: scale(0.95);
 }
 
 .edit-button:hover {
   background-color: #033a7a;
-  transform: scale(1.1);
 }
 
-.edit-button svg {
+.delete-button {
+  background-color: #dc3545;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+
+.action-button svg {
   width: 16px;
   height: 16px;
 }
@@ -226,13 +321,6 @@ const handleListingSaved = async () => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-}
-
-.listing-item-title {
-  color: #041e42;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
 }
 
 .listing-item-description {
@@ -333,6 +421,20 @@ const handleListingSaved = async () => {
 
   .listing-item {
     padding: 1rem;
+  }
+
+  .listing-item-header {
+    flex-wrap: wrap;
+  }
+
+  .listing-item-title {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-buttons {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .listing-item-image {
