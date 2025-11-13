@@ -1,75 +1,175 @@
-// Service for managing listings data in localStorage
-const STORAGE_KEY = 'zagshelpzags_listings'
+// Service for managing listings data via API
+import { useAuthStore } from '@/stores/auth'
 
-// Generate a unique ID for new listings
-const generateId = () => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2)
+const API_BASE_URL = 'http://localhost:3000/api'
+
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const authStore = useAuthStore()
+  const headers = {
+    'Content-Type': 'application/json'
+  }
+  
+  const authHeader = authStore.getAuthHeader()
+  if (authHeader.Authorization) {
+    headers.Authorization = authHeader.Authorization
+  }
+  
+  return headers
 }
 
-// Get all listings from localStorage
-export const getListings = () => {
+// Helper to transform MongoDB _id to id for frontend compatibility
+const transformListing = (listing) => {
+  if (!listing) return listing
+  return {
+    ...listing,
+    id: listing._id || listing.id
+  }
+}
+
+// Get all listings from API
+export const getListings = async () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
+    const response = await fetch(`${API_BASE_URL}/listings`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch listings')
+    }
+
+    // Transform listings to include id field
+    const listings = (data.data || []).map(transformListing)
+    return listings
   } catch (error) {
-    console.error('Error loading listings from localStorage:', error)
+    console.error('Error loading listings from API:', error)
+    // Return empty array on error instead of throwing
     return []
   }
 }
 
-// Save a new listing to localStorage
-export const saveListing = (listingData) => {
+// Save a new listing to API (requires authentication)
+export const saveListing = async (listingData) => {
   try {
-    const listings = getListings()
-    const newListing = {
-      id: generateId(),
-      ...listingData,
-      createdAt: new Date().toISOString(),
-      postedAt: new Date().toISOString()
+    const response = await fetch(`${API_BASE_URL}/listings`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(listingData)
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to create listing')
     }
-    
-    listings.unshift(newListing) // Add to beginning of array (newest first)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(listings))
-    return newListing
+
+    return transformListing(data.data)
   } catch (error) {
-    console.error('Error saving listing to localStorage:', error)
+    console.error('Error saving listing to API:', error)
     throw error
   }
 }
 
 // Get a specific listing by ID
-export const getListingById = (id) => {
-  const listings = getListings()
-  return listings.find(listing => listing.id === id)
+export const getListingById = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/listings/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch listing')
+    }
+
+    return transformListing(data.data)
+  } catch (error) {
+    console.error('Error fetching listing from API:', error)
+    return null
+  }
 }
 
-// Delete a listing by ID
-export const deleteListing = (id) => {
+// Delete a listing by ID (requires authentication)
+export const deleteListing = async (id) => {
   try {
-    const listings = getListings()
-    const filteredListings = listings.filter(listing => listing.id !== id)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredListings))
+    const response = await fetch(`${API_BASE_URL}/listings/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to delete listing')
+    }
+
     return true
   } catch (error) {
-    console.error('Error deleting listing from localStorage:', error)
+    console.error('Error deleting listing from API:', error)
     return false
   }
 }
 
-// Clear all listings (useful for testing)
-export const clearAllListings = () => {
+// Update a listing (requires authentication)
+export const updateListing = async (id, listingData) => {
   try {
-    localStorage.removeItem(STORAGE_KEY)
-    return true
+    const response = await fetch(`${API_BASE_URL}/listings/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(listingData)
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update listing')
+    }
+
+    return transformListing(data.data)
   } catch (error) {
-    console.error('Error clearing listings from localStorage:', error)
-    return false
+    console.error('Error updating listing via API:', error)
+    throw error
+  }
+}
+
+// Get listings by user ID
+export const getListingsByUser = async (userId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/listings/user/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch user listings')
+    }
+
+    // Transform listings to include id field
+    const listings = (data.data || []).map(transformListing)
+    return listings
+  } catch (error) {
+    console.error('Error fetching user listings from API:', error)
+    return []
   }
 }
 
 // Get listings count
-export const getListingsCount = () => {
-  return getListings().length
+export const getListingsCount = async () => {
+  const listings = await getListings()
+  return listings.length
 }
 
 // Generate a random date between September 1, 2025 and October 21, 2025

@@ -15,151 +15,53 @@
         <div v-else>
           <h1 class="form-header">Create Post</h1>
           
-          <form @submit.prevent="handleSubmit" class="form">
-          <!-- Title Field -->
-          <div class="form-group">
-            <label for="title" class="form-label">Title</label>
-            <input 
-              type="text" 
-              id="title" 
-              v-model="formData.title" 
-              class="form-input" 
-              placeholder="Enter post title"
-              required
-            />
-          </div>
-  
-          <!-- Description Field -->
-          <div class="form-group">
-            <label for="description" class="form-label">Description</label>
-            <textarea 
-              id="description" 
-              v-model="formData.description" 
-              class="form-textarea" 
-              placeholder="Enter post description"
-              rows="4"
-              required
-            ></textarea>
-          </div>
-  
-          <!-- Tags Selection -->
-          <div class="form-group">
-            <label class="form-label">Tags</label>
-            <div class="tags-container">
-              <button 
-                type="button"
-                v-for="tag in availableTags" 
-                :key="tag"
-                @click="toggleTag(tag)"
-                :class="['tag-button', { 'tag-selected': selectedTags.includes(tag) }]"
-              >
-                {{ tag }}
-              </button>
-            </div>
-          </div>
-  
-          <!-- Image Upload -->
-          <div class="form-group">
-            <label for="image" class="form-label">Upload Image</label>
-            <input 
-              type="file" 
-              id="image" 
-              @change="handleImageUpload" 
-              accept="image/*"
-              class="form-file"
-            />
-            <div v-if="imagePreview" class="image-preview">
-              <img :src="imagePreview" alt="Preview" />
-            </div>
-          </div>
-  
-           <!-- Submit Button -->
-           <button type="submit" class="submit-button">Create Post</button>
-         </form>
+          <ListingForm 
+            ref="formRef"
+            :submit-button-text="'Create Post'"
+            :is-submitting="isSubmitting"
+            @submit="handleSubmit"
+          />
         </div>
       </div>
     </div>
   </template>
   
   <script setup>
-  import { ref, reactive } from 'vue'
+  import { ref } from 'vue'
   import { RouterLink } from 'vue-router'
   import { saveListing } from '@/services/listingsService'
+  import ListingForm from '@/components/ListingForm.vue'
   
   // Success state
   const showSuccess = ref(false)
-  
-  // Form data
-  const formData = reactive({
-    title: '',
-    description: ''
-  })
-  
-  // Tags functionality
-  const availableTags = ['Homework Help', 'Creative Work', 'Professional Help', 'Manual Labor', 
-                        'Business', 'Housing', 'For Sale', 'Math', 'Moving', 'Roommate', 
-                        'Electronics', 'Design', 'Tutoring', 'Job', 'Study Group', 'Books', 
-                        'Career', 'Yard Work', 'Photography', 'Services', 'Music', 'Other']
-  const selectedTags = ref([])
-  
-  const toggleTag = (tag) => {
-    const index = selectedTags.value.indexOf(tag)
-    if (index > -1) {
-      selectedTags.value.splice(index, 1)
-    } else {
-      selectedTags.value.push(tag)
-    }
-  }
-  
-  // Image upload
-  const imagePreview = ref(null)
-  
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        imagePreview.value = e.target.result
-      }
-      reader.readAsDataURL(file)
-    }
-  }
+  const isSubmitting = ref(false)
+  const formRef = ref(null)
   
   // Form submission
-  const handleSubmit = async () => {
+  const handleSubmit = async (listingData) => {
     try {
-      // Prepare the listing data
-      const listingData = {
-        title: formData.title,
-        description: formData.description,
-        tags: selectedTags.value,
-        image: imagePreview.value
-      }
+      isSubmitting.value = true
       
-      // Save to localStorage
-      const savedListing = saveListing(listingData)
+      // Save to API (requires authentication)
+      const savedListing = await saveListing(listingData)
       console.log('Listing saved successfully:', savedListing)
       
       // Show success message
       showSuccess.value = true
     } catch (error) {
       console.error('Error saving listing:', error)
-      alert('There was an error saving your listing. Please try again.')
+      alert(error.message || 'There was an error saving your listing. Please try again.')
+    } finally {
+      isSubmitting.value = false
     }
   }
   
   // Reset form to create another post
   const resetForm = () => {
-    formData.title = ''
-    formData.description = ''
-    selectedTags.value = []
-    imagePreview.value = null
-    showSuccess.value = false
-    // Reset file input
-    const fileInput = document.getElementById('image')
-    if (fileInput) {
-      fileInput.value = ''
+    if (formRef.value) {
+      formRef.value.reset()
     }
+    showSuccess.value = false
   }
   </script>
   
@@ -190,118 +92,6 @@
     font-weight: 600;
   }
   
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .form-label {
-    font-weight: 500;
-    color: #041E42;
-    font-size: 1rem;
-  }
-  
-  .form-input,
-  .form-textarea {
-    padding: 0.75rem;
-    border: 2px solid #e1e5e9;
-    border-radius: 4px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-  }
-  
-  .form-input:focus,
-  .form-textarea:focus {
-    outline: none;
-    border-color: #041E42;
-  }
-  
-  .form-textarea {
-    resize: vertical;
-    min-height: 100px;
-  }
-  
-  .tags-container {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-  
-  .tag-button {
-    padding: 0.5rem 1rem;
-    border: 2px solid #e1e5e9;
-    background-color: white;
-    color: #041E42;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-  }
-  
-  .tag-button:hover {
-    border-color: #041E42;
-    background-color: #f0f4f8;
-  }
-  
-  .tag-selected {
-    background-color: #041E42;
-    color: white;
-    border-color: #041E42;
-  }
-  
-  .form-file {
-    padding: 0.5rem;
-    border: 2px dashed #e1e5e9;
-    border-radius: 4px;
-    background-color: #f8f9fa;
-    cursor: pointer;
-    transition: border-color 0.3s ease;
-  }
-  
-  .form-file:hover {
-    border-color: #041E42;
-  }
-  
-  .image-preview {
-    margin-top: 1rem;
-    text-align: center;
-  }
-  
-  .image-preview img {
-    max-width: 200px;
-    max-height: 200px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .submit-button {
-    background-color: #041E42;
-    color: white;
-    padding: 0.75rem 2rem;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 1rem;
-  }
-  
-  .submit-button:hover {
-    background-color: #033a7a;
-    transform: translateY(-1px);
-  }
-  
-  .submit-button:active {
-    transform: translateY(0);
-  }
   
   /* Success Message Styles */
   .success-message {

@@ -27,3 +27,5 @@ Thumbs.db
 *.log
 tmp/
 temp/
+
+/backend/test-db-connection.js

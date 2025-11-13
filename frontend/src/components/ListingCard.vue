@@ -24,7 +24,7 @@
         </span>
       </div>
       <div class="listing-meta">
-        <span class="posted-date">Posted on {{ formatDate(listing.postedAt) }}</span>
+        <span class="posted-date">Posted on {{ formatDate(listing.createdAt) }}</span>
       </div>
     </div>
   </div>
@@ -32,6 +32,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { formatDate } from '@/utils/dateFormatter.js'
 
 defineProps({
   listing: {
@@ -77,27 +78,6 @@ const handleImageLoad = () => {
     containerHeight = Math.min(containerHeight, 300)
     container.style.height = `${containerHeight}px`
   })
-}
-
-// Format date to MM/DD/YY HH:MM AM/PM format
-const formatDate = (dateString) => {
-  if (!dateString) return 'Unknown date'
-  
-  const date = new Date(dateString)
-  
-  // Format: MM/DD/YY HH:MM AM/PM
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const year = String(date.getFullYear()).slice(-2)
-  
-  // Convert to 12-hour format with AM/PM
-  let hours = date.getHours()
-  const ampm = hours >= 12 ? 'PM' : 'AM'
-  hours = hours % 12
-  hours = hours ? hours : 12 // 0 should be 12
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  
-  return `${month}/${day}/${year} at ${hours}:${minutes}${ampm}`
 }
 </script>
 

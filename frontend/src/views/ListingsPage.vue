@@ -159,25 +159,25 @@ onMounted(() => {
   loadListings()
 })
 
-// Function to load listings from localStorage and combine with mock data
-const loadListings = () => {
+// Function to load listings from API and combine with mock data
+const loadListings = async () => {
   try {
-    // Get user-submitted listings from localStorage
-    const userListings = getListings()
+    // Get user-submitted listings from API
+    const userListings = await getListings()
     
     // Add random dates to mock listings if they don't have postedAt
-    const mockListingsWithDates = mockListings.map(listing => ({
-      ...listing,
-      postedAt: listing.postedAt || generateRandomDate()
-    }))
+    // const mockListingsWithDates = mockListings.map(listing => ({
+    //   ...listing,
+    //   postedAt: listing.postedAt || generateRandomDate()
+    // }))
     
     // Combine user listings (newest first) with mock data
-    const allListings = [...userListings, ...mockListingsWithDates]
+    // const allListings = [...userListings, ...mockListingsWithDates]
     
     // Update the reactive listings
-    listings.value = allListings
+    listings.value = userListings
     
-    console.log(`Loaded ${userListings.length} user listings and ${mockListings.length} mock listings`)
+    // console.log(`Loaded ${userListings.length} user listings and ${mockListings.length} mock listings`)
   } catch (error) {
     console.error('Error loading listings:', error)
     // Fallback to mock data only
