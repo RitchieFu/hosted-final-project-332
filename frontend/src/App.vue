@@ -1,5 +1,9 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import UserMenu from '@/components/UserMenu.vue'
+
+const authStore = useAuthStore()
 </script>
 
 <template>
@@ -16,8 +20,14 @@ import { RouterLink, RouterView } from 'vue-router'
       </nav>
       
       <div class="nav-auth">
-        <RouterLink to="/login" class="btn-login">Login</RouterLink>
-        <RouterLink to="/signup" class="btn-signup">Sign Up</RouterLink>
+        <!-- Show login/signup when not authenticated -->
+        <template v-if="!authStore.isAuthenticated">
+          <RouterLink to="/login" class="btn-login">Login</RouterLink>
+          <RouterLink to="/signup" class="btn-signup">Sign Up</RouterLink>
+        </template>
+        
+        <!-- Show welcome button with dropdown when authenticated -->
+        <UserMenu v-else />
       </div>
     </div>
   </header>
