@@ -14,13 +14,39 @@
       <h1 class="main-title">Zags Help Zags</h1>
       <p class="subtitle">Contribute meaningfully to your community today!</p>
       
-      <div class="button-group">
+      <!-- Show welcome message if authenticated, otherwise show login/signup buttons -->
+      <div v-if="authStore.isAuthenticated" class="welcome-message">
+        <p class="welcome-text">Welcome back, {{ fullName }}!</p>
+      </div>
+      <div v-else class="button-group">
         <router-link to="/login" class="btn btn-primary">Log In</router-link>
         <router-link to="/signup" class="btn btn-secondary">Sign Up</router-link>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+
+// Get user's full name
+const fullName = computed(() => {
+  const firstName = authStore.user?.name?.first_name || ''
+  const lastName = authStore.user?.name?.last_name || ''
+  
+  if (firstName && lastName) {
+    return `${firstName} ${lastName}`
+  } else if (firstName) {
+    return firstName
+  } else if (lastName) {
+    return lastName
+  }
+  return 'User'
+})
+</script>
 
 <style scoped>
 .home-container {
@@ -78,6 +104,17 @@
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.welcome-message {
+  margin-top: 0rem;
+}
+
+.welcome-text {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
 }
 
 .btn {
@@ -139,6 +176,10 @@
   .subtitle {
     font-size: 1.2rem;
   }
+  
+  .welcome-text {
+    font-size: 1.3rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -150,6 +191,10 @@
     padding: 0.8rem 1.5rem;
     font-size: 1rem;
     min-width: 120px;
+  }
+  
+  .welcome-text {
+    font-size: 1.1rem;
   }
 }
 </style>
