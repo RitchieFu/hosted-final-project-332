@@ -66,11 +66,9 @@ const handleProfile = () => {
   router.push('/profile')
 }
 
-// Placeholder handlers
 const handleMyListings = () => {
-  console.log('My Listings clicked')
   showDropdown.value = false
-  // TODO: Navigate to My Listings page
+  router.push('/my-listings')
 }
 
 const handleLogout = async () => {

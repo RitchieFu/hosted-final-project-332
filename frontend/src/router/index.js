@@ -7,6 +7,7 @@ import SignUpPage from '@/views/SignUpPage.vue'
 import EmailVerificationPage from '@/views/EmailVerificationPage.vue'
 import ProfilePage from '@/views/ProfilePage.vue'
 import AccountDeletedPage from '@/views/AccountDeletedPage.vue'
+import MyListingsPage from '@/views/MyListingsPage.vue'
 
 const routes = [
   {path: '/', name: 'home', component: HomePage},
@@ -15,6 +16,7 @@ const routes = [
   {path: '/login', name: 'login', component: LoginPage},
   {path: '/signup', name: 'signup', component: SignUpPage},
   {path: '/profile', name: 'profile', component: ProfilePage},
+  {path: '/my-listings', name: 'my-listings', component: MyListingsPage},
   {
     path: '/verify-email', 
     name: 'verify-email', 
