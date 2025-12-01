@@ -164,11 +164,39 @@ const toggleTag = (tag) => {
 const handleImageUpload = (event) => {
   const file = event.target.files[0]
   if (file) {
-    formData.imageFile = file
+    // Client-side compression (Keep original dimensions, 0.8 quality jpeg)
     const reader = new FileReader()
     reader.onload = (e) => {
-      imagePreview.value = e.target.result
-      imageRemoved.value = false // Un-remove if they upload a new one
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const width = img.width
+        const height = img.height
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+
+        // Compress to JPEG with 0.8 quality
+        canvas.toBlob((blob) => {
+          if (blob) {
+            // Create a new File object with the compressed blob
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            })
+            
+            // Set the compressed file as the one to upload
+            formData.imageFile = compressedFile
+            
+            // Set preview from the blob (faster than re-reading)
+            imagePreview.value = URL.createObjectURL(blob)
+            imageRemoved.value = false
+          }
+        }, 'image/jpeg', 0.75)
+      }
+      img.src = e.target.result
     }
     reader.readAsDataURL(file)
   }

@@ -19,9 +19,9 @@ const listingSchema = new mongoose.Schema({
     validate: {
       validator: function(tags) {
         // Optional: validate against allowed tags if needed
-        return tags.length <= 10 // Limit to 10 tags max
+        return tags.length <= 20 // Limit to 10 tags max
       },
-      message: 'Cannot have more than 10 tags'
+      message: 'Cannot have more than 20 tags'
     }
   },
   image: {

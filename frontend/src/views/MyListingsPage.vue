@@ -329,13 +329,40 @@ const handleDeleteConfirm = async () => {
   line-height: 1.5;
   margin: 0;
   flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Limit to 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .listing-item-tags {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* Prevent wrapping to enable scrolling */
   gap: 0.5rem;
   margin-top: auto;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  padding-bottom: 0.5rem; /* Space for scrollbar */
+  scrollbar-width: thin; /* Firefox: thinner scrollbar */
+}
+
+/* Custom scrollbar styling for Webkit browsers (Chrome, Safari) */
+.listing-item-tags::-webkit-scrollbar {
+  height: 2px; /* Made even smaller */
+}
+
+.listing-item-tags::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.listing-item-tags::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.listing-item-tags::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
 }
 
 .listing-item-tags .tag {
@@ -346,6 +373,8 @@ const handleDeleteConfirm = async () => {
   font-size: 0.8rem;
   font-weight: 500;
   border: 1px solid #e1e5e9;
+  white-space: nowrap; /* Prevent tag text from wrapping */
+  flex-shrink: 0; /* Prevent tags from shrinking */
 }
 
 .listing-item-meta {
