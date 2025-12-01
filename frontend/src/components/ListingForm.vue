@@ -45,12 +45,20 @@
     <!-- Image Upload -->
     <div class="form-group">
       <label :for="`image-${formId}`" class="form-label">Upload Image</label>
-      <!-- Show current image if in edit mode and no new image uploaded -->
-      <div v-if="isEditMode && initialImage && !imagePreview" class="current-image">
-        <p class="current-image-label">Current image:</p>
-        <img :src="initialImage" alt="Current listing image" />
-        <button type="button" @click="removeImage" class="remove-image-btn">Remove Image</button>
+      
+      <!-- Image Preview Area (Shows either current existing image OR new upload preview) -->
+      <div v-if="(isEditMode && initialImage && !imagePreview) || imagePreview" class="image-preview-container">
+        <p class="preview-label">{{ imagePreview ? 'New Image Preview:' : 'Current Image:' }}</p>
+        <img :src="imagePreview || initialImage" alt="Listing image" class="preview-image" />
+        <button 
+          type="button" 
+          @click="removeImage" 
+          class="remove-image-btn"
+        >
+          Remove Image
+        </button>
       </div>
+
       <input 
         type="file" 
         :id="`image-${formId}`" 
@@ -58,10 +66,6 @@
         accept="image/*"
         class="form-file"
       />
-      <div v-if="imagePreview" class="image-preview">
-        <img :src="imagePreview" alt="Preview" />
-        <button v-if="isEditMode" type="button" @click="clearImagePreview" class="remove-image-btn">Remove New Image</button>
-      </div>
     </div>
 
     <!-- Submit Button Slot (for custom button text/behavior) -->
@@ -116,10 +120,11 @@ const availableTags = ['Homework Help', 'Creative Work', 'Professional Help', 'M
                       'Career', 'Yard Work', 'Photography', 'Services', 'Music', 'Other']
 const selectedTags = ref([])
 const imagePreview = ref(null)
+const imageRemoved = ref(false)
 
 // Initial image (for edit mode)
 const initialImage = computed(() => {
-  if (isEditMode.value && props.initialData?.image && !imagePreview.value) {
+  if (isEditMode.value && props.initialData?.image && !imagePreview.value && !imageRemoved.value) {
     return props.initialData.image
   }
   return null
@@ -134,6 +139,7 @@ watch(() => props.initialData, (newData) => {
     formData.imageFile = null
     selectedTags.value = newData.tags ? [...newData.tags] : []
     imagePreview.value = null // Reset preview when initial data changes
+    imageRemoved.value = false // Reset removed state
   } else {
     // Reset form for create mode
     formData.title = ''
@@ -142,6 +148,7 @@ watch(() => props.initialData, (newData) => {
     formData.imageFile = null
     selectedTags.value = []
     imagePreview.value = null
+    imageRemoved.value = false
   }
 }, { immediate: true })
 
@@ -161,6 +168,7 @@ const handleImageUpload = (event) => {
     const reader = new FileReader()
     reader.onload = (e) => {
       imagePreview.value = e.target.result
+      imageRemoved.value = false // Un-remove if they upload a new one
     }
     reader.readAsDataURL(file)
   }
@@ -170,20 +178,12 @@ const removeImage = () => {
   formData.image = null
   formData.imageFile = null
   imagePreview.value = null
+  imageRemoved.value = true // Mark as removed to hide initialImage
   const fileInput = document.getElementById(`image-${props.formId}`)
   if (fileInput) {
     fileInput.value = ''
   }
   emit('image-removed')
-}
-
-const clearImagePreview = () => {
-  imagePreview.value = null
-  formData.imageFile = null
-  const fileInput = document.getElementById(`image-${props.formId}`)
-  if (fileInput) {
-    fileInput.value = ''
-  }
 }
 
 const handleFormSubmit = () => {
@@ -192,8 +192,10 @@ const handleFormSubmit = () => {
     title: formData.title,
     description: formData.description,
     tags: selectedTags.value,
-    // If new image uploaded, use it; otherwise use existing image (or null)
-    image: imagePreview.value || formData.image || null,
+    // If new image uploaded, use it. 
+    // If image was removed (and no new one), use null.
+    // Otherwise use existing image.
+    image: imagePreview.value || (imageRemoved.value ? null : formData.image) || null,
     // Pass the raw file for uploading
     imageFile: formData.imageFile
   }
@@ -211,6 +213,7 @@ defineExpose({
     formData.imageFile = null
     selectedTags.value = []
     imagePreview.value = null
+    imageRemoved.value = false
     const fileInput = document.getElementById(`image-${props.formId}`)
     if (fileInput) {
       fileInput.value = ''
@@ -286,50 +289,30 @@ defineExpose({
   border-color: #041E42;
 }
 
-.form-file {
-  padding: 0.5rem;
-  border: 2px dashed #e1e5e9;
-  border-radius: 4px;
-  background-color: #f8f9fa;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-}
-
-.form-file:hover {
-  border-color: #041E42;
-}
-
-.current-image {
+.image-preview-container {
   margin-bottom: 1rem;
+  text-align: center;
+  border: 1px solid #e1e5e9;
+  border-radius: 4px;
+  padding: 1rem;
+  background-color: #f8f9fa;
 }
 
-.current-image-label {
+.preview-label {
   font-size: 0.9rem;
   color: #666;
   margin-bottom: 0.5rem;
+  font-weight: 500;
 }
 
-.current-image img {
-  max-width: 200px;
-  max-height: 200px;
+.preview-image {
+  max-width: 100%;
+  max-height: 300px;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: block;
-  margin-bottom: 0.5rem;
-}
-
-.image-preview {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-.image-preview img {
-  max-width: 200px;
-  max-height: 200px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: block;
-  margin: 0 auto 0.5rem;
+  margin: 0 auto 1rem;
+  object-fit: contain;
 }
 
 .remove-image-btn {
@@ -345,6 +328,20 @@ defineExpose({
 
 .remove-image-btn:hover {
   background-color: #c82333;
+}
+
+.form-file {
+  padding: 0.5rem;
+  border: 2px dashed #e1e5e9;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  width: 100%;
+  box-sizing: border-box; /* Ensure padding doesn't affect width */
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Add ellipsis if filename is too long */
+  white-space: nowrap; /* Keep on one line */
 }
 
 .submit-button {

@@ -80,6 +80,13 @@ const handleSubmit = async (listingData) => {
       }
     }
     
+    // Explicitly set image to null if it was removed in the form but no new file was added
+    // The ListingForm sets listingData.image to null when removed, so we just need to ensure
+    // we respect that if imageFile is also null.
+    if (!listingData.imageFile && listingData.image === null) {
+        // This confirms removal. The API expects `image: null` to remove it.
+    }
+    
     // Update listing via API
     // listingData.image will be: new URL if uploaded, existing URL/string if not changed, or null if removed
     await updateListing(props.listing.id, listingData)
