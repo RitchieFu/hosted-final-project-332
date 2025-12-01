@@ -24,7 +24,7 @@
       <!-- Loading indicator -->
       <div v-if="loadingMore" class="loading-more">
         <p>Loading more listings...</p>
-      </div>
+        </div>
       
       <!-- End of results message -->
       <div v-if="!hasMore && listings.length > 0 && !loadingMore" class="end-of-results">
@@ -248,9 +248,9 @@ const loadListings = async (reset = false) => {
     console.error('Error loading listings:', error)
     // Fallback to mock data only on initial load
     if (listings.value.length === 0) {
-      listings.value = mockListings
-    }
+    listings.value = mockListings
   }
+}
 }
 
 // Function to load more listings (for infinite scroll)
