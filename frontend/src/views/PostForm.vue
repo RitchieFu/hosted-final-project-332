@@ -31,6 +31,8 @@
   import { RouterLink } from 'vue-router'
   import { saveListing } from '@/services/listingsService'
   import ListingForm from '@/components/ListingForm.vue'
+  import { storage } from '@/config/firebase'
+  import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
   
   // Success state
   const showSuccess = ref(false)
@@ -41,6 +43,29 @@
   const handleSubmit = async (listingData) => {
     try {
       isSubmitting.value = true
+      
+      // Upload image to Firebase if exists
+      if (listingData.imageFile) {
+        try {
+          const fileName = `listings/${Date.now()}_${listingData.imageFile.name}`
+          const imageRef = storageRef(storage, fileName)
+          const snapshot = await uploadBytes(imageRef, listingData.imageFile)
+          const downloadURL = await getDownloadURL(snapshot.ref)
+          listingData.image = downloadURL
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError)
+          throw new Error('Failed to upload image. Please try again.')
+        }
+      } else {
+        // If no image file but image exists (base64 preview), we might want to clear it or handle it
+        // But for new posts, if no file, image should be null unless we want to support base64 submission (which is what it was doing before)
+        // If we only want firebase URLs, we should probably ignore the base64 preview string if no file is present
+        // However, listingData.image currently holds the preview string.
+        // Let's assume for new posts we only want uploaded images.
+        if (!listingData.imageFile) {
+            listingData.image = null
+        }
+      }
       
       // Save to API (requires authentication)
       const savedListing = await saveListing(listingData)

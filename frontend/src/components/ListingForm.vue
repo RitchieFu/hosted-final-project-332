@@ -105,7 +105,8 @@ const isEditMode = computed(() => !!props.initialData)
 const formData = reactive({
   title: '',
   description: '',
-  image: null
+  image: null,
+  imageFile: null
 })
 
 // Tags functionality
@@ -130,6 +131,7 @@ watch(() => props.initialData, (newData) => {
     formData.title = newData.title || ''
     formData.description = newData.description || ''
     formData.image = newData.image || null
+    formData.imageFile = null
     selectedTags.value = newData.tags ? [...newData.tags] : []
     imagePreview.value = null // Reset preview when initial data changes
   } else {
@@ -137,6 +139,7 @@ watch(() => props.initialData, (newData) => {
     formData.title = ''
     formData.description = ''
     formData.image = null
+    formData.imageFile = null
     selectedTags.value = []
     imagePreview.value = null
   }
@@ -154,6 +157,7 @@ const toggleTag = (tag) => {
 const handleImageUpload = (event) => {
   const file = event.target.files[0]
   if (file) {
+    formData.imageFile = file
     const reader = new FileReader()
     reader.onload = (e) => {
       imagePreview.value = e.target.result
@@ -164,6 +168,7 @@ const handleImageUpload = (event) => {
 
 const removeImage = () => {
   formData.image = null
+  formData.imageFile = null
   imagePreview.value = null
   const fileInput = document.getElementById(`image-${props.formId}`)
   if (fileInput) {
@@ -174,6 +179,7 @@ const removeImage = () => {
 
 const clearImagePreview = () => {
   imagePreview.value = null
+  formData.imageFile = null
   const fileInput = document.getElementById(`image-${props.formId}`)
   if (fileInput) {
     fileInput.value = ''
@@ -187,7 +193,9 @@ const handleFormSubmit = () => {
     description: formData.description,
     tags: selectedTags.value,
     // If new image uploaded, use it; otherwise use existing image (or null)
-    image: imagePreview.value || formData.image || null
+    image: imagePreview.value || formData.image || null,
+    // Pass the raw file for uploading
+    imageFile: formData.imageFile
   }
   
   // Emit submit event with form data
@@ -200,6 +208,7 @@ defineExpose({
     formData.title = ''
     formData.description = ''
     formData.image = null
+    formData.imageFile = null
     selectedTags.value = []
     imagePreview.value = null
     const fileInput = document.getElementById(`image-${props.formId}`)

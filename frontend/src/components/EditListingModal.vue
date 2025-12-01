@@ -35,6 +35,8 @@
 import { ref } from 'vue'
 import { updateListing } from '@/services/listingsService'
 import ListingForm from '@/components/ListingForm.vue'
+import { storage } from '@/config/firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const props = defineProps({
   isOpen: {
@@ -64,8 +66,22 @@ const handleSubmit = async (listingData) => {
   try {
     isSaving.value = true
     
+    // Upload image to Firebase if new file exists
+    if (listingData.imageFile) {
+      try {
+        const fileName = `listings/${Date.now()}_${listingData.imageFile.name}`
+        const imageRef = storageRef(storage, fileName)
+        const snapshot = await uploadBytes(imageRef, listingData.imageFile)
+        const downloadURL = await getDownloadURL(snapshot.ref)
+        listingData.image = downloadURL
+      } catch (uploadError) {
+        console.error('Error uploading image:', uploadError)
+        throw new Error('Failed to upload image. Please try again.')
+      }
+    }
+    
     // Update listing via API
-    // listingData.image will be: new image if uploaded, existing image if not, or null if removed
+    // listingData.image will be: new URL if uploaded, existing URL/string if not changed, or null if removed
     await updateListing(props.listing.id, listingData)
     
     // Emit saved event to refresh the list
