@@ -17,46 +17,105 @@
     </div>
 
     <!-- Listings -->
-    <div v-else class="listings-list-container">
-      <div v-for="listing in listings" :key="listing.id" class="listing-item">
-        <!-- Header Row: Title and Action Buttons -->
-        <div class="listing-item-header">
-          <h3 class="listing-item-title">{{ listing.title }}</h3>
-          <div class="action-buttons">
-            <button @click="openEditModal(listing)" class="action-button edit-button" aria-label="Edit listing">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-            </button>
-            <button @click="openDeleteModal(listing)" class="action-button delete-button" aria-label="Delete listing">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
+    <div v-else class="listings-container">
+      
+      <!-- Active Listings Section -->
+      <div v-if="activeListings.length > 0" class="listings-section">
+        <div class="listings-list-container">
+          <div v-for="listing in activeListings" :key="listing.id" class="listing-item">
+            <!-- Header Row: Title and Action Buttons -->
+            <div class="listing-item-header">
+              <h3 class="listing-item-title">{{ listing.title }}</h3>
+              <div class="action-buttons">
+                <button @click="openEditModal(listing)" class="action-button edit-button" aria-label="Edit listing">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button @click="openDeleteModal(listing)" class="action-button delete-button" aria-label="Delete listing">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Image -->
+            <div v-if="listing.image" class="listing-item-image">
+              <img :src="listing.image" :alt="listing.title" />
+            </div>
+            
+            <!-- Content -->
+            <div class="listing-item-content">
+              <p v-if="listing.description" class="listing-item-description">{{ listing.description }}</p>
+              
+              <!-- Tags -->
+              <div v-if="listing.tags && listing.tags.length > 0" class="listing-item-tags">
+                <span v-for="tag in listing.tags" :key="tag" class="tag">
+                  {{ tag }}
+                </span>
+              </div>
+              
+              <!-- Meta info -->
+              <div class="listing-item-meta">
+                <span class="posted-date">Posted on {{ formatDate(listing.createdAt || listing.postedAt) }}</span>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <!-- Image -->
-        <div v-if="listing.image" class="listing-item-image">
-          <img :src="listing.image" :alt="listing.title" />
+      </div>
+
+      <!-- Hidden Listings Section -->
+      <div v-if="hiddenListings.length > 0" class="listings-section hidden-section">
+        <div class="section-header">
+          <h2 class="section-title">Hidden Listings</h2>
+          <p class="section-description">These posts are hidden. Please update the listing to have it appear on the main listings page.</p>
         </div>
         
-        <!-- Content -->
-        <div class="listing-item-content">
-          <p v-if="listing.description" class="listing-item-description">{{ listing.description }}</p>
-          
-          <!-- Tags -->
-          <div v-if="listing.tags && listing.tags.length > 0" class="listing-item-tags">
-            <span v-for="tag in listing.tags" :key="tag" class="tag">
-              {{ tag }}
-            </span>
-          </div>
-          
-          <!-- Meta info -->
-          <div class="listing-item-meta">
-            <span class="posted-date">Posted on {{ formatDate(listing.createdAt || listing.postedAt) }}</span>
+        <div class="listings-list-container">
+          <div v-for="listing in hiddenListings" :key="listing.id" class="listing-item faded">
+            <!-- Header Row: Title and Action Buttons -->
+            <div class="listing-item-header">
+              <h3 class="listing-item-title">{{ listing.title }}</h3>
+              <div class="action-buttons">
+                <button @click="openEditModal(listing)" class="action-button edit-button" aria-label="Edit listing">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button @click="openDeleteModal(listing)" class="action-button delete-button" aria-label="Delete listing">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Image -->
+            <div v-if="listing.image" class="listing-item-image">
+              <img :src="listing.image" :alt="listing.title" />
+            </div>
+            
+            <!-- Content -->
+            <div class="listing-item-content">
+              <p v-if="listing.description" class="listing-item-description">{{ listing.description }}</p>
+              
+              <!-- Tags -->
+              <div v-if="listing.tags && listing.tags.length > 0" class="listing-item-tags">
+                <span v-for="tag in listing.tags" :key="tag" class="tag">
+                  {{ tag }}
+                </span>
+              </div>
+              
+              <!-- Meta info -->
+              <div class="listing-item-meta">
+                <span class="posted-date">Posted on {{ formatDate(listing.createdAt || listing.postedAt) }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -82,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getListingsByUser, deleteListing } from '@/services/listingsService'
@@ -98,6 +157,26 @@ const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const selectedListing = ref(null)
 const isDeleting = ref(false)
+
+// Categorize listings into active and hidden
+const activeListings = computed(() => {
+  return listings.value.filter(listing => !isListingHidden(listing))
+})
+
+const hiddenListings = computed(() => {
+  return listings.value.filter(listing => isListingHidden(listing))
+})
+
+// Helper function to check if a listing is hidden (older than 7 days)
+const isListingHidden = (listing) => {
+  const dateToUse = listing.updatedAt || listing.createdAt || listing.postedAt
+  if (!dateToUse) return false
+  
+  const listingDate = new Date(dateToUse).getTime()
+  const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000)
+  
+  return listingDate < sevenDaysAgo
+}
 
 // Load user's listings on component mount
 onMounted(async () => {
@@ -213,11 +292,41 @@ const handleDeleteConfirm = async () => {
 
 /* Listings grid layout */
 .listings-list-container {
-  max-width: 80%;
-  margin: 2rem auto 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.5rem;
+}
+
+.listings-container {
+  max-width: 80%;
+  margin: 2rem auto 0;
+}
+
+.listings-section {
+  margin-bottom: 3rem;
+}
+
+.hidden-section {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e1e5e9;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  color: #041e42;
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.section-description {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
 }
 
 .listing-item {
@@ -228,11 +337,19 @@ const handleDeleteConfirm = async () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease, opacity 0.3s ease;
 }
 
 .listing-item:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.faded {
+  opacity: 0.6;
+}
+
+.faded:hover {
+  opacity: 1;
 }
 
 .listing-item-header {
