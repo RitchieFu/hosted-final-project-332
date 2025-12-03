@@ -6,6 +6,7 @@ import { dirname, join } from 'path'
 import { connectDB } from './config/db.js'
 import authRoutes from './routes/auth.js'
 import listingsRoutes from './routes/listings.js'
+import { sanitizeInput } from './middleware/sanitizeMiddleware.js'
 
 // Get current directory for ES modules
 const __filename = fileURLToPath(import.meta.url)
@@ -29,6 +30,8 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+// Sanitize all inputs to prevent MongoDB injection attacks
+app.use(sanitizeInput)
 
 // Test route
 app.get('/api/test', (req, res) => {

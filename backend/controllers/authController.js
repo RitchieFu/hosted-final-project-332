@@ -1,10 +1,12 @@
 import stytchClient from '../config/stytch.js'
 import { deleteAllListingsByUser } from './listingsController.js'
+import sanitize from 'mongo-sanitize'
 
 // Sign up a new user
 export const signUp = async (req, res) => {
   try {
-    const { email, password, firstName, lastName, phone } = req.body
+    // Sanitize input to prevent MongoDB injection attacks
+    const { email, password, firstName, lastName, phone } = sanitize(req.body)
 
     console.log('Signup request received:', {
       email: email,
@@ -13,12 +15,46 @@ export const signUp = async (req, res) => {
       hasPhone: !!phone
     })
 
-    // Validate required fields
-    if (!email || !password) {
-      console.log('Validation failed: Missing email or password')
+    // Validate required fields and ensure they are strings (not objects)
+    // This prevents MongoDB injection via nested objects like {"$ne": null}
+    if (!email || typeof email !== 'string') {
+      console.log('Validation failed: Missing or invalid email')
       return res.status(400).json({
         success: false,
-        error: 'Email and password are required'
+        error: 'Email is required and must be a string'
+      })
+    }
+
+    if (!password || typeof password !== 'string') {
+      console.log('Validation failed: Missing or invalid password')
+      return res.status(400).json({
+        success: false,
+        error: 'Password is required and must be a string'
+      })
+    }
+
+    // Validate optional fields are strings if provided
+    if (firstName !== undefined && firstName !== null && typeof firstName !== 'string') {
+      console.log('Validation failed: Invalid firstName type')
+      return res.status(400).json({
+        success: false,
+        error: 'First name must be a string'
+      })
+    }
+
+    if (lastName !== undefined && lastName !== null && typeof lastName !== 'string') {
+      console.log('Validation failed: Invalid lastName type')
+      return res.status(400).json({
+        success: false,
+        error: 'Last name must be a string'
+      })
+    }
+
+    if (phone !== undefined && phone !== null && typeof phone !== 'string') {
+      console.log('Validation failed: Invalid phone type')
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number must be a string'
       })
     }
 
@@ -88,18 +124,27 @@ export const signUp = async (req, res) => {
 // Login a user
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body
+    // Sanitize input to prevent MongoDB injection attacks
+    const { email, password } = sanitize(req.body)
 
     console.log('Login request received:', {
       email: email
     })
 
-    // Validate required fields
-    if (!email || !password) {
-      console.log('Validation failed: Missing email or password')
+    // Validate required fields and ensure they are strings (not objects)
+    if (!email || typeof email !== 'string') {
+      console.log('Validation failed: Missing or invalid email')
       return res.status(400).json({
         success: false,
-        error: 'Email and password are required'
+        error: 'Email is required and must be a string'
+      })
+    }
+
+    if (!password || typeof password !== 'string') {
+      console.log('Validation failed: Missing or invalid password')
+      return res.status(400).json({
+        success: false,
+        error: 'Password is required and must be a string'
       })
     }
 
@@ -181,16 +226,17 @@ export const login = async (req, res) => {
 // Logout a user (revoke session)
 export const logout = async (req, res) => {
   try {
-    const { session_token } = req.body
+    // Sanitize input to prevent MongoDB injection attacks
+    const { session_token } = sanitize(req.body)
 
     console.log('Logout request received')
 
-    // Validate required fields
-    if (!session_token) {
-      console.log('Validation failed: Missing session_token')
+    // Validate required fields and ensure it's a string (not an object)
+    if (!session_token || typeof session_token !== 'string') {
+      console.log('Validation failed: Missing or invalid session_token')
       return res.status(400).json({
         success: false,
-        error: 'Session token is required'
+        error: 'Session token is required and must be a string'
       })
     }
 

@@ -1,4 +1,5 @@
 import Listing from '../models/Listing.js'
+import sanitize from 'mongo-sanitize'
 
 /**
  * Create a new listing
@@ -6,14 +7,23 @@ import Listing from '../models/Listing.js'
  */
 export const createListing = async (req, res) => {
   try {
-    const { title, description, tags, image } = req.body
+    // Sanitize input to prevent MongoDB injection attacks
+    const { title, description, tags, image } = sanitize(req.body)
     const userId = req.authenticatedUserId // From auth middleware
 
-    // Validate required fields
-    if (!title || !description) {
+    // Validate required fields and ensure they are strings (not objects)
+    // This prevents MongoDB injection via nested objects like {"$ne": null}
+    if (!title || typeof title !== 'string') {
       return res.status(400).json({
         success: false,
-        error: 'Title and description are required'
+        error: 'Title is required and must be a string'
+      })
+    }
+    
+    if (!description || typeof description !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Description is required and must be a string'
       })
     }
 
@@ -60,7 +70,8 @@ export const createListing = async (req, res) => {
  */
 export const getAllListings = async (req, res) => {
   try {
-    const { tags, limit = 50, skip = 0, hours, days } = req.query
+    // Sanitize query parameters to prevent MongoDB injection attacks
+    const { tags, limit = 50, skip = 0, hours, days } = sanitize(req.query)
 
     // Build query
     const query = {}
@@ -137,7 +148,8 @@ export const getAllListings = async (req, res) => {
  */
 export const getListingById = async (req, res) => {
   try {
-    const { id } = req.params
+    // Sanitize input to prevent MongoDB injection attacks
+    const { id } = sanitize(req.params)
 
     const listing = await Listing.findById(id).lean()
 
@@ -178,8 +190,9 @@ export const getListingById = async (req, res) => {
  */
 export const updateListing = async (req, res) => {
   try {
-    const { id } = req.params
-    const { title, description, tags, image } = req.body
+    // Sanitize input to prevent MongoDB injection attacks
+    const { id } = sanitize(req.params)
+    const { title, description, tags, image } = sanitize(req.body)
     const userId = req.authenticatedUserId
 
     // Find the listing
@@ -238,7 +251,8 @@ export const updateListing = async (req, res) => {
  */
 export const deleteListing = async (req, res) => {
   try {
-    const { id } = req.params
+    // Sanitize input to prevent MongoDB injection attacks
+    const { id } = sanitize(req.params)
     const userId = req.authenticatedUserId
 
     // Find the listing
@@ -314,7 +328,8 @@ export const deleteAllListingsByUser = async (userId) => {
  */
 export const getListingsByUser = async (req, res) => {
   try {
-    const { userId } = req.params
+    // Sanitize input to prevent MongoDB injection attacks
+    const { userId } = sanitize(req.params)
 
     const listings = await Listing.find({ createdBy: userId })
       .sort({ createdAt: -1 })
