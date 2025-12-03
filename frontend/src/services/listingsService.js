@@ -1,7 +1,8 @@
 // Service for managing listings data via API
 import { useAuthStore } from '@/stores/auth'
 
-const API_BASE_URL = 'http://localhost:3000/api'
+// const API_BASE_URL = 'http://localhost:3000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 // Helper to get auth headers
 const getAuthHeaders = () => {
