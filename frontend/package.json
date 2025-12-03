@@ -16,6 +16,7 @@
   "dependencies": {
     "@stytch/vanilla-js": "^5.41.0",
     "dotenv": "^17.2.3",
+    "firebase": "^12.6.0",
     "pinia": "^3.0.3",
     "vue": "^3.5.22",
     "vue-router": "^4.5.1"
