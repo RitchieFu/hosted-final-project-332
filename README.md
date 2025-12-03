@@ -8,6 +8,8 @@ Created by Ritchie Fu, Fall 2025
 ### Description:
 This is an app designed to help Gonzaga students to ask, receive, and give help to other students! Think of it like a centralized board for people at Gonzaga to connect and help each other. Whether you need a helping hand, looking to borrow some gear, or need help on some digital design work, this platform is meant to facilitate that. It is a ***volunteer board***, so people are expected to only give and request free help. I really wanted to make this to give more people the opportunity to volunteer, allowing people to choose the tasks they are most comfortable with and that would work with their schedule.
 
+12-2-2025: Forked repo into my personal account so that I could host it via Github Pages. My local repo points to two remote repositories"
+
 ### Table of Contents:
 - [Installation](#installation)
 - [Usage](#usage)
