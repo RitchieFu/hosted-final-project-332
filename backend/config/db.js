@@ -11,7 +11,7 @@ const __dirname = dirname(__filename)
 dotenv.config({ path: join(__dirname, '..', '.env') })
 
 // MongoDB connection URI - defaults to localhost if not set
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/zagshelpzags'
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/test'
 
 /**
  * Connect to MongoDB
