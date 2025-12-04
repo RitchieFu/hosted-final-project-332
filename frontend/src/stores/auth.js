@@ -57,14 +57,23 @@ export const useAuthStore = defineStore('auth', () => {
     userId.value = sessionData.user_id
     user.value = sessionData.user
     
+    // Debug: Log the session object structure
+    console.log('Session data received:', {
+      hasSession: !!sessionData.session,
+      sessionKeys: sessionData.session ? Object.keys(sessionData.session) : null,
+      sessionFull: sessionData.session
+    })
+    
     // Use session expiry from Stytch if available, otherwise calculate 60 minutes from now
     if (sessionData.session?.expires_at) {
       expiresAt.value = sessionData.session.expires_at
+      console.log('Using Stytch expiry:', expiresAt.value)
     } else {
       // Fallback: Calculate expiry time (60 minutes from now)
       const expiryTime = new Date()
       expiryTime.setMinutes(expiryTime.getMinutes() + 60)
       expiresAt.value = expiryTime.toISOString()
+      console.log('Using calculated expiry (60 min fallback):', expiresAt.value)
     }
 
     // Save to localStorage
@@ -76,6 +85,11 @@ export const useAuthStore = defineStore('auth', () => {
         user: user.value
       }))
       localStorage.setItem(SESSION_EXPIRY_KEY, expiresAt.value)
+      console.log('Session saved to localStorage:', {
+        sessionKey: STORAGE_KEY,
+        expiryKey: SESSION_EXPIRY_KEY,
+        expiryValue: expiresAt.value
+      })
     } catch (error) {
       console.error('Error saving session to storage:', error)
     }
